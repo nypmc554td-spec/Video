@@ -1,572 +1,591 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Приёмка</title>
-<meta name="theme-color" content="#101418" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-<meta name="apple-mobile-web-app-title" content="Приёмка" />
-<link rel="manifest" href='data:application/manifest+json,{"name":"Приёмка","short_name":"Приёмка","display":"standalone","background_color":"%23E3E5E0","theme_color":"%23101418","start_url":"./"}' />
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<meta name="theme-color" content="#101418">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Приёмка">
 <style>
-  * { -webkit-tap-highlight-color: transparent; }
-  html, body, #root { margin:0; padding:0; height:100%; }
-  body { background:#E3E5E0; }
-  button, input, select { font-family:inherit; }
-  :focus-visible { outline:3px solid #FFB020; outline-offset:2px; }
+  :root{
+    --bg:#E3E5E0; --surface:#fff; --ink:#101418; --muted:#6E7379;
+    --line:#CDD0CA; --amber:#FFB020; --red:#D8402F; --ok:#2F7D5B;
+    --disp:'Oswald','Arial Narrow',Impact,'Helvetica Neue',sans-serif;
+    --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);
+    font-family:var(--body);color:var(--ink);font-size:16px}
+  .disp{font-family:var(--disp);letter-spacing:.04em;text-transform:uppercase}
+  button,input,select{font-family:inherit;font-size:16px}
+  :focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+  .stripe{height:10px;background:repeating-linear-gradient(115deg,var(--red) 0 14px,var(--amber) 14px 28px)}
+  header{background:var(--surface);border-bottom:1px solid var(--line)}
+  .head-pad{padding:14px 16px 12px}
+  .title{font-size:19px;line-height:1}
+  .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .tabs{display:flex;border-top:1px solid var(--line)}
+  .tab{flex:1;padding:14px 8px;font-size:13px;background:none;border:0;color:var(--muted);cursor:pointer}
+  .tab.on{background:var(--ink);color:#fff}
+
+  .wrap{padding:16px}
+  .btn{font-family:var(--disp);letter-spacing:.04em;text-transform:uppercase;
+    font-size:14px;padding:15px 18px;border-radius:2px;min-height:52px;cursor:pointer;
+    background:var(--ink);color:#fff;border:1px solid var(--ink);width:100%}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.dark{background:transparent;color:#fff;border:1px solid #3A434C}
+  .btn.warn{background:transparent;color:var(--red);border:1px solid var(--red)}
+  .btn.go{background:var(--amber);color:var(--ink);border:1px solid var(--amber)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .row{display:flex;gap:8px}
+
+  .card{background:var(--surface);border:1px solid var(--line);margin-bottom:10px;display:flex}
+  .card .bar{width:6px;background:var(--amber)}
+  .card.shot .bar{background:var(--ok)}
+  .card .in{flex:1;padding:14px}
+  .reg{font-size:24px;line-height:1}
+  .meta{font-size:13px;color:var(--muted);margin-top:6px}
+  .last{font-size:12px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+  .card.shot .last{color:var(--ok)}
+
+  label.f{display:block;margin-bottom:14px}
+  label.f .lab{font-size:11px;color:var(--muted);margin-bottom:6px;
+    font-family:var(--disp);letter-spacing:.04em;text-transform:uppercase}
+  .inp{width:100%;padding:14px 12px;background:var(--surface);
+    border:1px solid var(--line);border-radius:2px;outline:none;color:var(--ink)}
+  .inp.big{font-family:var(--disp);font-size:22px;letter-spacing:.04em;text-transform:uppercase}
+  .chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .chip{font-family:var(--disp);letter-spacing:.04em;text-transform:uppercase;font-size:12px;
+    padding:9px 12px;background:transparent;color:var(--muted);
+    border:1px solid var(--line);border-radius:2px;cursor:pointer}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .err{color:var(--red);font-size:13px;margin-bottom:12px}
+  .empty{background:var(--surface);border:1px dashed var(--line);padding:24px;
+    text-align:center;margin-bottom:12px}
+  .note{font-size:12px;color:var(--muted);margin-top:18px;line-height:1.5}
+
+  /* съёмка */
+  #cap{position:fixed;inset:0;background:var(--ink);display:none;flex-direction:column;z-index:10}
+  #cap.on{display:flex}
+  .cap-head{padding:12px 14px;color:#fff;display:flex;align-items:center;gap:12px;flex:0 0 auto}
+  .cap-n{font-family:var(--disp);font-size:26px;color:var(--amber);line-height:1}
+  .cap-name{font-size:14px;font-weight:600}
+  .cap-hint{font-size:12px;color:#A7ADB4}
+  .hold{font-family:var(--disp);font-size:12px;padding:4px 8px;background:#2A323A;color:#fff;white-space:nowrap}
+  .hold.land{background:var(--amber);color:var(--ink)}
+  .view{position:relative;flex:1 1 auto;background:#000;overflow:hidden;min-height:200px}
+  .view video,.view img.shot{width:100%;height:100%;display:block}
+  .view video{object-fit:cover}
+  .view img.shot{object-fit:contain}
+  .view svg{position:absolute;inset:0;pointer-events:none}
+  .thumb{position:absolute;left:10px;bottom:10px;width:84px;border:2px solid var(--amber)}
+  .thumb img{width:100%;display:block}
+  .thumb span{display:block;font-family:var(--disp);font-size:9px;background:var(--amber);
+    color:var(--ink);text-align:center;padding:2px 0}
+  .fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:24px;text-align:center;color:#fff}
+  .cap-foot{padding:12px 14px 18px;flex:0 0 auto}
+  .prog{display:flex;gap:3px;margin-bottom:12px}
+  .prog i{flex:1;height:4px;background:#2A323A}
+  .prog i.done{background:var(--amber)}
+  .prog i.cur{background:#5A6570}
+  .ctrl{display:flex;align-items:center;gap:12px}
+  .ctrl .btn{width:auto;flex:1;min-height:48px;font-size:12px;padding:12px}
+  .shutter{width:74px;height:74px;border-radius:50%;background:var(--amber);
+    border:4px solid #fff;flex:0 0 auto;cursor:pointer}
+  .shutter:disabled{background:#3A434C}
+  .redo{width:74px;height:74px;border-radius:50%;background:transparent;color:#fff;
+    border:2px solid #5A6570;flex:0 0 auto;font-family:var(--disp);font-size:12px;cursor:pointer}
+  #crash{display:none;padding:16px;background:var(--red);color:#fff;font-size:13px;
+    white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="crash"></div>
+<div id="app"></div>
 
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo, useRef } = React;
+<div id="cap">
+  <div class="cap-head">
+    <div class="cap-n" id="capN">01</div>
+    <div style="flex:1;min-width:0">
+      <div class="cap-name" id="capName"></div>
+      <div class="cap-hint" id="capHint"></div>
+    </div>
+    <div class="hold" id="capHold"></div>
+  </div>
+  <div class="view" id="capView">
+    <video id="cam" playsinline muted autoplay></video>
+    <img class="shot" id="capShot" style="display:none" alt="">
+    <svg id="capSvg"></svg>
+    <div class="thumb" id="capThumb" style="display:none">
+      <img id="capThumbImg" alt=""><span>прошлый раз</span>
+    </div>
+    <div class="fallback" id="capFallback" style="display:none">
+      <div>
+        <div class="disp" style="font-size:15px;margin-bottom:8px">Камера недоступна</div>
+        <div style="font-size:13px;color:#A7ADB4;margin-bottom:16px" id="capFallbackMsg">
+          Разрешите доступ к камере или снимите обычной камерой телефона.
+        </div>
+        <label class="disp" style="font-size:13px;background:var(--amber);color:var(--ink);padding:14px 18px;display:inline-block;cursor:pointer">
+          Открыть камеру телефона
+          <input type="file" accept="image/*" capture="environment" id="capFile" style="display:none">
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="cap-foot">
+    <div class="prog" id="capProg"></div>
+    <div class="ctrl">
+      <button class="btn dark" id="capPrev">Назад</button>
+      <button class="shutter" id="capShoot" aria-label="Снять кадр"></button>
+      <button class="redo" id="capRedo" style="display:none">Пере&#8209;снять</button>
+      <button class="btn dark" id="capNext">Дальше</button>
+    </div>
+    <div id="capErr" style="color:var(--amber);font-size:12px;margin-top:12px"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="capCancel" style="flex:1;min-height:46px;font-size:12px">Прервать</button>
+      <button class="btn go" id="capDone" style="flex:2;min-height:46px;font-size:13px">Завершить</button>
+    </div>
+  </div>
+</div>
 
-/* ---------- токены ---------- */
-const T = { bg:"#E3E5E0", surface:"#FFFFFF", ink:"#101418", muted:"#6E7379", line:"#CDD0CA", amber:"#FFB020", red:"#D8402F", ok:"#2F7D5B" };
-const display = { fontFamily:"'Oswald','Arial Narrow',Impact,sans-serif", letterSpacing:"0.04em", textTransform:"uppercase" };
-const body = { fontFamily:"'Inter',system-ui,-apple-system,sans-serif" };
+<script>
+window.onerror = function (m, s, l) {
+  var c = document.getElementById('crash');
+  c.style.display = 'block';
+  c.textContent = 'Ошибка: ' + m + ' (строка ' + l + ')';
+};
 
-const TRAILER_TYPES = ["Тент","Рефрижератор","Изотерм","Платформа","Самосвал","Цистерна","Контейнеровоз"];
-const TRACTOR_TYPES = ["Тягач 4x2","Тягач 6x2","Тягач 6x4"];
-const MAN_MODELS = ["MAN TGX","MAN TGS","MAN TGM","MAN TGL"];
+/* ---------------- данные ---------------- */
+var TRAILER_TYPES = ['Тент','Рефрижератор','Изотерм','Платформа','Самосвал','Цистерна','Контейнеровоз'];
+var TRACTOR_TYPES = ['Тягач 4x2','Тягач 6x2','Тягач 6x4'];
+var MAN_MODELS = ['MAN TGX','MAN TGS','MAN TGM','MAN TGL'];
 
-const TRAILER_SHOTS = [
-  { n:1,  name:"Передняя стенка",           dist:"6 м",        hint:"Стенка целиком, стоять по центру",              frame:"rect",    ratio:0.66, hold:"portrait" },
-  { n:2,  name:"Левый борт, перёд",         dist:"7 м",        hint:"Перпендикулярно борту, напротив первой трети",  frame:"rect",    ratio:1.7,  hold:"landscape" },
-  { n:3,  name:"Левый борт, зад",           dist:"7 м",        hint:"Перпендикулярно борту, напротив последней трети",frame:"rect",   ratio:1.7,  hold:"landscape" },
-  { n:4,  name:"Задние двери",              dist:"5 м",        hint:"Двери закрыты, номер читается",                 frame:"rect",    ratio:0.66, hold:"portrait" },
-  { n:5,  name:"Правый борт, зад",          dist:"7 м",        hint:"Зеркально кадру 3",                             frame:"rect",    ratio:1.7,  hold:"landscape" },
-  { n:6,  name:"Правый борт, перёд",        dist:"7 м",        hint:"Зеркально кадру 2",                             frame:"rect",    ratio:1.7,  hold:"landscape" },
-  { n:7,  name:"Угол 3/4 передний правый",  dist:"6 м",        hint:"В кадре стенка и борт разом",                   frame:"corner",  ratio:1.4,  hold:"landscape" },
-  { n:8,  name:"Угол 3/4 задний левый",     dist:"6 м",        hint:"В кадре двери и борт разом",                    frame:"cornerL", ratio:1.4,  hold:"landscape" },
-  { n:9,  name:"Колёса слева",              dist:"2,5 м",      hint:"Все оси в одном кадре, диски видно",            frame:"rect",    ratio:2.2,  hold:"landscape" },
-  { n:10, name:"Колёса справа",             dist:"2,5 м",      hint:"Все оси в одном кадре, диски видно",            frame:"rect",    ratio:2.2,  hold:"landscape" },
-  { n:11, name:"Опорные ноги и шкворень",   dist:"2 м",        hint:"Присесть, снимать снизу вверх",                 frame:"rect",    ratio:1.1,  hold:"portrait" },
-  { n:12, name:"Номер и таблички",          dist:"1 м",        hint:"Опознавательный кадр, номер полностью",         frame:"rect",    ratio:2.0,  hold:"landscape" },
-  { n:13, name:"Крыша / тент сверху",       dist:"с эстакады", hint:"Если есть доступ, иначе пропустить",             frame:"rect",    ratio:1.9,  hold:"landscape", optional:true },
+var TRAILER_SHOTS = [
+  {n:1, name:'Передняя стенка',          hint:'Стенка целиком, стоять по центру',               frame:'rect',    ratio:0.66, hold:'p'},
+  {n:2, name:'Левый борт, перёд',        hint:'Перпендикулярно борту, напротив первой трети',   frame:'rect',    ratio:1.7,  hold:'l'},
+  {n:3, name:'Левый борт, зад',          hint:'Перпендикулярно борту, напротив последней трети',frame:'rect',    ratio:1.7,  hold:'l'},
+  {n:4, name:'Задние двери',             hint:'Двери закрыты, номер читается',                  frame:'rect',    ratio:0.66, hold:'p'},
+  {n:5, name:'Правый борт, зад',         hint:'Зеркально кадру 3',                              frame:'rect',    ratio:1.7,  hold:'l'},
+  {n:6, name:'Правый борт, перёд',       hint:'Зеркально кадру 2',                              frame:'rect',    ratio:1.7,  hold:'l'},
+  {n:7, name:'Угол 3/4 передний правый', hint:'В кадре стенка и борт разом',                    frame:'corner',  ratio:1.4,  hold:'l'},
+  {n:8, name:'Угол 3/4 задний левый',    hint:'В кадре двери и борт разом',                     frame:'cornerL', ratio:1.4,  hold:'l'},
+  {n:9, name:'Колёса слева',             hint:'Все оси в кадре, диски видно',                   frame:'rect',    ratio:2.2,  hold:'l'},
+  {n:10,name:'Колёса справа',            hint:'Все оси в кадре, диски видно',                   frame:'rect',    ratio:2.2,  hold:'l'},
+  {n:11,name:'Опорные ноги и шкворень',  hint:'Присесть, снимать снизу вверх',                  frame:'rect',    ratio:1.1,  hold:'p'},
+  {n:12,name:'Номер и таблички',         hint:'Опознавательный кадр, номер полностью',          frame:'rect',    ratio:2.0,  hold:'l'},
+  {n:13,name:'Крыша / тент сверху',      hint:'Если есть доступ, иначе пропустить',             frame:'rect',    ratio:1.9,  hold:'l'}
 ];
 
-const TRACTOR_SHOTS = [
-  { n:1,  name:"Перёд: решётка, бампер, фары", dist:"4 м",  hint:"По центру, кабина целиком",           frame:"rect",    ratio:0.7, hold:"portrait" },
-  { n:2,  name:"Левая сторона",                dist:"6 м",  hint:"От бампера до седла",                 frame:"rect",    ratio:1.7, hold:"landscape" },
-  { n:3,  name:"Правая сторона",               dist:"6 м",  hint:"Зеркально кадру 2",                   frame:"rect",    ratio:1.7, hold:"landscape" },
-  { n:4,  name:"Зад кабины и седло",           dist:"3 м",  hint:"Седло, шланги, площадка",             frame:"rect",    ratio:0.9, hold:"portrait" },
-  { n:5,  name:"Угол 3/4 передний левый",      dist:"5 м",  hint:"В кадре перёд и борт разом",          frame:"cornerL", ratio:1.4, hold:"landscape" },
-  { n:6,  name:"Угол 3/4 задний правый",       dist:"5 м",  hint:"В кадре седло и борт разом",          frame:"corner",  ratio:1.4, hold:"landscape" },
-  { n:7,  name:"Лобовое стекло",               dist:"1,5 м",hint:"Сколы и трещины, снимать под углом",  frame:"rect",    ratio:1.9, hold:"landscape" },
-  { n:8,  name:"Колёса слева",                 dist:"2 м",  hint:"Обе оси, диски и резина",             frame:"rect",    ratio:2.0, hold:"landscape" },
-  { n:9,  name:"Колёса справа",                dist:"2 м",  hint:"Обе оси, диски и резина",             frame:"rect",    ratio:2.0, hold:"landscape" },
-  { n:10, name:"Баки и ступени",               dist:"2,5 м",hint:"Самое частое место задиров",          frame:"rect",    ratio:1.8, hold:"landscape" },
-  { n:11, name:"Салон: панель, сиденья",       dist:"1 м",  hint:"От двери, одним заходом",             frame:"rect",    ratio:0.8, hold:"portrait", optional:true },
+var TRACTOR_SHOTS = [
+  {n:1, name:'Перёд: решётка, бампер',   hint:'По центру, кабина целиком',          frame:'rect',    ratio:0.7, hold:'p'},
+  {n:2, name:'Левая сторона',            hint:'От бампера до седла',                frame:'rect',    ratio:1.7, hold:'l'},
+  {n:3, name:'Правая сторона',           hint:'Зеркально кадру 2',                  frame:'rect',    ratio:1.7, hold:'l'},
+  {n:4, name:'Зад кабины и седло',       hint:'Седло, шланги, площадка',            frame:'rect',    ratio:0.9, hold:'p'},
+  {n:5, name:'Угол 3/4 передний левый',  hint:'В кадре перёд и борт разом',         frame:'cornerL', ratio:1.4, hold:'l'},
+  {n:6, name:'Угол 3/4 задний правый',   hint:'В кадре седло и борт разом',         frame:'corner',  ratio:1.4, hold:'l'},
+  {n:7, name:'Лобовое стекло',           hint:'Сколы и трещины, снимать под углом', frame:'rect',    ratio:1.9, hold:'l'},
+  {n:8, name:'Колёса слева',             hint:'Обе оси, диски и резина',            frame:'rect',    ratio:2.0, hold:'l'},
+  {n:9, name:'Колёса справа',            hint:'Обе оси, диски и резина',            frame:'rect',    ratio:2.0, hold:'l'},
+  {n:10,name:'Баки и ступени',           hint:'Самое частое место задиров',         frame:'rect',    ratio:1.8, hold:'l'},
+  {n:11,name:'Салон: панель, сиденья',   hint:'От двери, одним заходом',            frame:'rect',    ratio:0.8, hold:'p'}
 ];
 
-const shotsFor = (kind) => kind === "trailer" ? TRAILER_SHOTS : TRACTOR_SHOTS;
+function shotsFor(k){ return k === 'trailer' ? TRAILER_SHOTS : TRACTOR_SHOTS; }
 
-/* ---------- хранилище: IndexedDB ---------- */
-const DB = (() => {
-  let dbp = null;
-  const open = () => dbp || (dbp = new Promise((res, rej) => {
-    const r = indexedDB.open("priyomka", 1);
-    r.onupgradeneeded = () => r.result.createObjectStore("kv");
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  }));
-  return {
-    async get(k) {
-      const db = await open();
-      return new Promise((res, rej) => {
-        const q = db.transaction("kv", "readonly").objectStore("kv").get(k);
-        q.onsuccess = () => res(q.result === undefined ? null : q.result);
-        q.onerror = () => rej(q.error);
-      });
-    },
-    async set(k, v) {
-      const db = await open();
-      return new Promise((res, rej) => {
-        const q = db.transaction("kv", "readwrite").objectStore("kv").put(v, k);
-        q.onsuccess = () => res(true);
-        q.onerror = () => rej(q.error);
-      });
-    },
-  };
-})();
-
-const KEY_UNITS = "fleet:units";
-const KEY_INDEX = "fleet:sessions";
-const EMPTY = { trailers: [], tractors: [] };
-
-async function sGet(k) { try { return await DB.get(k); } catch { return null; } }
-async function sSet(k, v) { try { await DB.set(k, v); return true; } catch { return false; } }
-
-const normReg = (s) => s.toUpperCase().replace(/\s+/g, " ").trim();
-const fmtDate = (iso) => new Date(iso).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" });
-
-/* ---------- элементы ---------- */
-const MarkerStripe = ({ height = 10 }) => (
-  <div style={{ height, backgroundImage: `repeating-linear-gradient(115deg, ${T.red} 0 14px, ${T.amber} 14px 28px)` }} />
-);
-
-function Btn({ children, onClick, variant = "primary", style = {}, disabled }) {
-  const v = {
-    primary: { background:T.ink, color:"#fff", border:`1px solid ${T.ink}` },
-    ghost:   { background:"transparent", color:T.ink, border:`1px solid ${T.line}` },
-    dark:    { background:"transparent", color:"#fff", border:"1px solid #3A434C" },
-    danger:  { background:"transparent", color:T.red, border:`1px solid ${T.red}` },
-  }[variant];
-  return (
-    <button onClick={onClick} disabled={disabled}
-      style={{ ...display, ...v, fontSize:14, padding:"15px 18px", borderRadius:2, cursor:disabled?"default":"pointer", opacity:disabled?0.4:1, minHeight:52, ...style }}>
-      {children}
-    </button>
-  );
+/* ---------------- хранилище ---------------- */
+var dbp = null;
+function openDB(){
+  if (dbp) return dbp;
+  dbp = new Promise(function(res, rej){
+    var r = indexedDB.open('priyomka', 1);
+    r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
+    r.onsuccess = function(){ res(r.result); };
+    r.onerror = function(){ rej(r.error); };
+  });
+  return dbp;
+}
+function dbGet(k){
+  return openDB().then(function(db){
+    return new Promise(function(res, rej){
+      var q = db.transaction('kv','readonly').objectStore('kv').get(k);
+      q.onsuccess = function(){ res(q.result === undefined ? null : q.result); };
+      q.onerror = function(){ rej(q.error); };
+    });
+  }).catch(function(){ return null; });
+}
+function dbSet(k, v){
+  return openDB().then(function(db){
+    return new Promise(function(res, rej){
+      var q = db.transaction('kv','readwrite').objectStore('kv').put(v, k);
+      q.onsuccess = function(){ res(true); };
+      q.onerror = function(){ rej(q.error); };
+    });
+  }).catch(function(){ return false; });
 }
 
-const inputStyle = { ...body, width:"100%", boxSizing:"border-box", padding:"14px 12px", fontSize:16, color:T.ink, background:T.surface, border:`1px solid ${T.line}`, borderRadius:2, outline:"none" };
+var K_UNITS = 'fleet:units', K_INDEX = 'fleet:sessions';
 
-const Field = ({ label, children }) => (
-  <label style={{ display:"block", marginBottom:14 }}>
-    <div style={{ ...display, fontSize:11, color:T.muted, marginBottom:6 }}>{label}</div>
-    {children}
-  </label>
-);
+/* ---------------- состояние ---------------- */
+var S = {
+  units:{trailers:[],tractors:[]},
+  sessions:[],
+  kind:'trailer',
+  screen:'list',
+  editing:null,
+  q:'',
+  err:''
+};
 
-/* ---------- контур поверх камеры ---------- */
-function ContourOverlay({ shot }) {
-  const [box, setBox] = useState({ w: 0, h: 0 });
-  const wrapRef = useRef(null);
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+  });
+}
+function normReg(s){ return s.toUpperCase().replace(/\s+/g,' ').trim(); }
+function fmtDate(iso){
+  var d = new Date(iso), p = function(x){ return ('0'+x).slice(-2); };
+  return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function curList(){ return S.kind === 'trailer' ? S.units.trailers : S.units.tractors; }
+function lastFor(id){
+  for (var i=0;i<S.sessions.length;i++) if (S.sessions[i].unitId === id) return S.sessions[i];
+  return null;
+}
+function saveUnits(){
+  return dbSet(K_UNITS, JSON.parse(JSON.stringify(S.units)));
+}
 
-  useEffect(() => {
-    const measure = () => {
-      if (wrapRef.current) {
-        const r = wrapRef.current.getBoundingClientRect();
-        setBox({ w: r.width, h: r.height });
-      }
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    window.addEventListener("orientationchange", measure);
-    return () => { window.removeEventListener("resize", measure); window.removeEventListener("orientationchange", measure); };
-  }, []);
+/* ---------------- отрисовка ---------------- */
+var app = document.getElementById('app');
 
-  const { w, h } = box;
-  if (!w || !h) return <div ref={wrapRef} style={{ position:"absolute", inset:0 }} />;
+function render(){
+  var h = '';
+  h += '<header><div class="stripe"></div><div class="head-pad">'
+     + '<div class="disp title">Приёмка</div>'
+     + '<div class="sub">Съёмка по контуру, база машин</div></div><div class="tabs">'
+     + '<button class="tab disp' + (S.kind==='trailer'?' on':'') + '" data-kind="trailer">Прицепы'
+     + (S.units.trailers.length ? ' · ' + S.units.trailers.length : '') + '</button>'
+     + '<button class="tab disp' + (S.kind==='tractor'?' on':'') + '" data-kind="tractor">Тягачи'
+     + (S.units.tractors.length ? ' · ' + S.units.tractors.length : '') + '</button>'
+     + '</div></header>';
 
-  const fill = 0.86;
-  let cw = w * fill, ch = cw / shot.ratio;
-  if (ch > h * fill) { ch = h * fill; cw = ch * shot.ratio; }
-  const cx = (w - cw) / 2, cy = (h - ch) / 2;
+  h += S.screen === 'form' ? formHTML() : listHTML();
+  app.innerHTML = h;
+  bind();
+}
 
-  let path;
-  if (shot.frame === "corner") {
-    path = `M ${cx} ${cy + ch*0.06} L ${cx+cw} ${cy + ch*0.2} L ${cx+cw} ${cy+ch} L ${cx} ${cy + ch*0.94} Z`;
-  } else if (shot.frame === "cornerL") {
-    path = `M ${cx} ${cy + ch*0.2} L ${cx+cw} ${cy + ch*0.06} L ${cx+cw} ${cy + ch*0.94} L ${cx} ${cy+ch} Z`;
+function listHTML(){
+  var list = curList(), q = S.q.toUpperCase().trim();
+  var arr = list.filter(function(u){
+    return !q || u.reg.indexOf(q) >= 0 || (u.brand||'').toUpperCase().indexOf(q) >= 0;
+  }).sort(function(a,b){ return a.reg.localeCompare(b.reg); });
+
+  var h = '<div class="wrap">';
+  if (list.length > 3)
+    h += '<input class="inp" id="q" placeholder="Поиск по номеру или марке" value="'+esc(S.q)+'" style="margin-bottom:12px">';
+
+  if (!arr.length){
+    h += '<div class="empty"><div class="disp" style="font-size:15px;margin-bottom:6px">'
+       + (list.length ? 'Ничего не найдено' : 'База пустая') + '</div>'
+       + '<div style="font-size:13px;color:var(--muted)">'
+       + (list.length ? 'Измените запрос.' : 'Добавьте первый номер — на него повесятся съёмки.')
+       + '</div></div>';
   } else {
-    path = `M ${cx} ${cy} L ${cx+cw} ${cy} L ${cx+cw} ${cy+ch} L ${cx} ${cy+ch} Z`;
+    arr.forEach(function(u){
+      var last = lastFor(u.id);
+      h += '<div class="card' + (last ? ' shot' : '') + '"><div class="bar"></div><div class="in">'
+         + '<div class="disp reg">'+esc(u.reg)+'</div>'
+         + '<div class="meta">'+esc([u.type,u.brand].filter(Boolean).join(' · ') || 'без описания')+'</div>'
+         + '<div class="last">'
+         + (last ? 'Снимали '+fmtDate(last.date)+(last.driver?' · '+esc(last.driver):'')+' · '+last.count+' кадров'
+                 : 'Съёмок ещё не было')
+         + '</div><div class="row" style="margin-top:12px">'
+         + '<button class="btn" data-shoot="'+u.id+'" style="flex:2;min-height:46px;font-size:12px">Снять</button>'
+         + '<button class="btn ghost" data-edit="'+u.id+'" style="flex:1;min-height:46px;font-size:12px">Изменить</button>'
+         + '</div></div></div>';
+    });
   }
 
-  const c = 26;
-  const marks = [[cx,cy,1,1],[cx+cw,cy,-1,1],[cx,cy+ch,1,-1],[cx+cw,cy+ch,-1,-1]];
-
-  return (
-    <div ref={wrapRef} style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
-      <svg width={w} height={h} style={{ position:"absolute", inset:0 }}>
-        <defs>
-          <mask id="cut">
-            <rect x="0" y="0" width={w} height={h} fill="#fff" />
-            <path d={path} fill="#000" />
-          </mask>
-        </defs>
-        <rect x="0" y="0" width={w} height={h} fill="rgba(16,20,24,0.55)" mask="url(#cut)" />
-        <path d={path} fill="none" stroke={T.amber} strokeWidth="3" strokeDasharray="14 10" />
-        {marks.map(([mx,my,sx,sy],i) => (
-          <g key={i} stroke={T.amber} strokeWidth="5" strokeLinecap="square">
-            <line x1={mx} y1={my} x2={mx + c*sx} y2={my} />
-            <line x1={mx} y1={my} x2={mx} y2={my + c*sy} />
-          </g>
-        ))}
-        <line x1={cx+cw/2} y1={cy+ch/2-14} x2={cx+cw/2} y2={cy+ch/2+14} stroke={T.amber} strokeWidth="2" opacity="0.8" />
-        <line x1={cx+cw/2-14} y1={cy+ch/2} x2={cx+cw/2+14} y2={cy+ch/2} stroke={T.amber} strokeWidth="2" opacity="0.8" />
-      </svg>
-    </div>
-  );
+  h += '<button class="btn" id="add" style="margin-top:6px">+ '
+     + (S.kind === 'trailer' ? 'Добавить прицеп' : 'Добавить тягач') + '</button>'
+     + '<div class="note">Комплекты хранятся на устройстве. При следующей съёмке прошлый кадр показывается в углу экрана.</div></div>';
+  return h;
 }
 
-/* ---------- экран съёмки ---------- */
-function CaptureScreen({ unit, kind, prevSession, onFinish, onCancel }) {
-  const shots = shotsFor(kind);
-  const [idx, setIdx] = useState(0);
-  const [photos, setPhotos] = useState({});
-  const [camState, setCamState] = useState("starting");
-  const [driver, setDriver] = useState("");
-  const [askDriver, setAskDriver] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saveErr, setSaveErr] = useState("");
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const shot = shots[idx];
+function formHTML(){
+  var e = S.editing, isTrailer = S.kind === 'trailer';
+  var types = isTrailer ? TRAILER_TYPES : TRACTOR_TYPES;
+  var brand = e ? (e.brand||'') : (isTrailer ? '' : 'MAN TGX');
+  var h = '<div class="wrap"><div class="disp" style="font-size:20px;margin-bottom:18px">'
+        + (e ? 'Изменить' : (isTrailer ? 'Новый прицеп' : 'Новый тягач')) + '</div>';
 
-  useEffect(() => {
-    if (askDriver) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } }, audio: false,
-        });
-        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
-        streamRef.current = stream;
-        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play().catch(()=>{}); }
-        setCamState("live");
-      } catch { setCamState("denied"); }
-    })();
-    return () => { cancelled = true; if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop()); };
-  }, [askDriver]);
+  h += '<label class="f"><div class="lab">Регистрационный номер</div>'
+     + '<input class="inp big" id="reg" autocapitalize="characters" value="'+esc(e?e.reg:'')+'" placeholder="'
+     + (isTrailer ? 'WGM 5842X' : 'AB 1234-7') + '"></label>';
 
-  const downscale = (src, sw, sh) => {
-    const max = 1100, scale = Math.min(1, max / Math.max(sw, sh));
-    const c = document.createElement("canvas");
-    c.width = Math.round(sw * scale); c.height = Math.round(sh * scale);
-    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
-    return c.toDataURL("image/jpeg", 0.62);
-  };
+  h += '<label class="f"><div class="lab">Тип</div><select class="inp" id="type">';
+  types.forEach(function(t){
+    h += '<option'+(e && e.type===t ? ' selected':'')+'>'+esc(t)+'</option>';
+  });
+  h += '</select></label>';
 
-  const shoot = () => {
-    const v = videoRef.current;
-    if (!v || !v.videoWidth) return;
-    setPhotos(p => ({ ...p, [shot.n]: downscale(v, v.videoWidth, v.videoHeight) }));
-  };
+  h += '<label class="f"><div class="lab">'+(isTrailer?'Марка и модель':'Модель')+'</div>'
+     + '<input class="inp" id="brand" value="'+esc(brand)+'" placeholder="'
+     + (isTrailer ? 'Schmitz SCS 24' : 'MAN TGX 18.510') + '">';
+  if (!isTrailer){
+    h += '<div class="chips">';
+    MAN_MODELS.forEach(function(m){
+      h += '<button class="chip'+(brand.indexOf(m)===0?' on':'')+'" data-model="'+esc(m)+'">'+esc(m.replace('MAN ',''))+'</button>';
+    });
+    h += '</div>';
+  }
+  h += '</label>';
 
-  const shootFromFile = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => setPhotos(p => ({ ...p, [shot.n]: downscale(img, img.width, img.height) }));
-      img.src = reader.result;
+  h += '<label class="f"><div class="lab">Примечание</div>'
+     + '<input class="inp" id="note" value="'+esc(e?(e.note||''):'')+'" placeholder="Известные дефекты, особенности"></label>';
+
+  if (S.err) h += '<div class="err">'+esc(S.err)+'</div>';
+
+  h += '<div class="row"><button class="btn" id="save" style="flex:2">Сохранить</button>'
+     + '<button class="btn ghost" id="cancel" style="flex:1">Отмена</button></div>';
+  if (e) h += '<button class="btn warn" id="del" style="margin-top:10px">Удалить из базы</button>';
+  return h + '</div>';
+}
+
+function bind(){
+  Array.prototype.forEach.call(app.querySelectorAll('[data-kind]'), function(b){
+    b.onclick = function(){ S.kind = b.dataset.kind; S.screen='list'; S.err=''; render(); };
+  });
+  var q = document.getElementById('q');
+  if (q) q.oninput = function(){ S.q = q.value; var p = q.selectionStart; render();
+    var n = document.getElementById('q'); if (n){ n.focus(); n.setSelectionRange(p,p); } };
+
+  var add = document.getElementById('add');
+  if (add) add.onclick = function(){ S.editing = null; S.err=''; S.screen='form'; render(); };
+
+  Array.prototype.forEach.call(app.querySelectorAll('[data-edit]'), function(b){
+    b.onclick = function(){
+      S.editing = curList().filter(function(u){ return u.id === b.dataset.edit; })[0];
+      S.err=''; S.screen='form'; render();
     };
-    reader.readAsDataURL(file);
+  });
+  Array.prototype.forEach.call(app.querySelectorAll('[data-shoot]'), function(b){
+    b.onclick = function(){
+      var u = curList().filter(function(x){ return x.id === b.dataset.shoot; })[0];
+      if (u) startCapture(u);
+    };
+  });
+  Array.prototype.forEach.call(app.querySelectorAll('[data-model]'), function(b){
+    b.onclick = function(){ document.getElementById('brand').value = b.dataset.model;
+      Array.prototype.forEach.call(app.querySelectorAll('[data-model]'), function(x){ x.classList.remove('on'); });
+      b.classList.add('on'); };
+  });
+
+  var save = document.getElementById('save');
+  if (save) save.onclick = function(){
+    var reg = normReg(document.getElementById('reg').value);
+    if (!reg){ S.err = 'Введите регистрационный номер.'; return render(); }
+    var list = curList(), e = S.editing;
+    var clash = list.filter(function(u){ return u.reg === reg && (!e || u.id !== e.id); }).length;
+    if (clash){ S.err = 'Такой номер уже есть в базе.'; return render(); }
+    var unit = { id: e ? e.id : String(Date.now()), reg: reg,
+      type: document.getElementById('type').value,
+      brand: document.getElementById('brand').value.trim(),
+      note: document.getElementById('note').value.trim() };
+    if (e){ for (var i=0;i<list.length;i++) if (list[i].id === e.id) list[i] = unit; }
+    else list.push(unit);
+    saveUnits();
+    S.editing = null; S.err=''; S.screen='list'; render();
   };
-
-  const finish = async () => {
-    setSaving(true); setSaveErr("");
-    const id = String(Date.now());
-    const session = { id, unitId:unit.id, reg:unit.reg, kind, driver:driver.trim(), date:new Date().toISOString(), photos, count:Object.keys(photos).length };
-    const ok = await sSet("shots:" + id, session);
-    if (!ok) { setSaving(false); setSaveErr("Комплект не сохранился. Освободите место и повторите."); return; }
-    const index = (await sGet(KEY_INDEX)) || [];
-    const meta = { id, unitId:unit.id, reg:unit.reg, kind, driver:session.driver, date:session.date, count:session.count };
-    await sSet(KEY_INDEX, [meta, ...index].slice(0, 500));
-    setSaving(false);
-    onFinish(meta);
+  var cancel = document.getElementById('cancel');
+  if (cancel) cancel.onclick = function(){ S.editing=null; S.err=''; S.screen='list'; render(); };
+  var del = document.getElementById('del');
+  if (del) del.onclick = function(){
+    var id = S.editing.id, list = curList();
+    var next = list.filter(function(u){ return u.id !== id; });
+    if (S.kind === 'trailer') S.units.trailers = next; else S.units.tractors = next;
+    saveUnits(); S.editing=null; S.screen='list'; render();
   };
-
-  const done = Object.keys(photos).length;
-  const current = photos[shot.n];
-  const prevPhoto = prevSession && prevSession.photos ? prevSession.photos[shot.n] : null;
-
-  if (askDriver) {
-    return (
-      <div style={{ padding:16 }}>
-        <div style={{ ...display, fontSize:20 }}>Съёмка</div>
-        <div style={{ ...display, fontSize:15, color:T.amber, marginTop:2, marginBottom:18 }}>{unit.reg}</div>
-        <div style={{ ...display, fontSize:11, color:T.muted, marginBottom:6 }}>Кто принимает</div>
-        <input style={inputStyle} value={driver} onChange={e => setDriver(e.target.value)} placeholder="Фамилия водителя" />
-        <div style={{ ...body, fontSize:13, color:T.muted, margin:"14px 0 20px", lineHeight:1.5 }}>
-          {shots.length} кадров по контуру. Совмещайте борт с жёлтой рамкой — расстояние подберётся само.
-        </div>
-        <Btn onClick={() => setAskDriver(false)} style={{ width:"100%" }}>Включить камеру</Btn>
-        <Btn variant="ghost" onClick={onCancel} style={{ width:"100%", marginTop:8 }}>Отмена</Btn>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ background:T.ink, minHeight:"100vh", display:"flex", flexDirection:"column" }}>
-      <div style={{ padding:"12px 14px", color:"#fff", display:"flex", alignItems:"center", gap:12 }}>
-        <div style={{ ...display, fontSize:26, color:T.amber, lineHeight:1 }}>{String(shot.n).padStart(2,"0")}</div>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ ...body, fontSize:14, fontWeight:600 }}>{shot.name}</div>
-          <div style={{ ...body, fontSize:12, color:"#A7ADB4" }}>{shot.hint}</div>
-        </div>
-        <div style={{ ...display, fontSize:12, background: shot.hold === "landscape" ? T.amber : "#2A323A", color: shot.hold === "landscape" ? T.ink : "#fff", padding:"4px 8px" }}>
-          {shot.hold === "landscape" ? "боком" : "стоя"}
-        </div>
-      </div>
-
-      <div style={{ position:"relative", flex:1, minHeight:300, background:"#000", overflow:"hidden" }}>
-        {current ? (
-          <img src={current} alt={shot.name} style={{ width:"100%", height:"100%", objectFit:"contain" }} />
-        ) : (
-          <React.Fragment>
-            <video ref={videoRef} playsInline muted autoPlay style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-            <ContourOverlay shot={shot} />
-            {camState === "denied" ? (
-              <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", padding:24, textAlign:"center" }}>
-                <div>
-                  <div style={{ ...display, fontSize:15, color:"#fff", marginBottom:8 }}>Камера недоступна</div>
-                  <div style={{ ...body, fontSize:13, color:"#A7ADB4", marginBottom:16 }}>
-                    Разрешите доступ к камере в настройках браузера или снимите обычной камерой телефона.
-                  </div>
-                  <label style={{ ...display, fontSize:13, background:T.amber, color:T.ink, padding:"14px 18px", display:"inline-block", cursor:"pointer" }}>
-                    Открыть камеру телефона
-                    <input type="file" accept="image/*" capture="environment" style={{ display:"none" }}
-                      onChange={e => e.target.files && e.target.files[0] && shootFromFile(e.target.files[0])} />
-                  </label>
-                </div>
-              </div>
-            ) : null}
-          </React.Fragment>
-        )}
-
-        {prevPhoto && !current ? (
-          <div style={{ position:"absolute", left:10, bottom:10, width:84, border:`2px solid ${T.amber}` }}>
-            <img src={prevPhoto} alt="прошлая съёмка" style={{ width:"100%", display:"block" }} />
-            <div style={{ ...display, fontSize:9, background:T.amber, color:T.ink, textAlign:"center", padding:"2px 0" }}>прошлый раз</div>
-          </div>
-        ) : null}
-      </div>
-
-      <div style={{ padding:"12px 14px 18px", background:T.ink }}>
-        <div style={{ display:"flex", gap:3, marginBottom:12 }}>
-          {shots.map(s => (
-            <div key={s.n} style={{ flex:1, height:4, background: photos[s.n] ? T.amber : (s.n === shot.n ? "#5A6570" : "#2A323A") }} />
-          ))}
-        </div>
-
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <Btn variant="dark" onClick={() => setIdx(Math.max(0, idx-1))} disabled={idx === 0} style={{ flex:1, minHeight:48, fontSize:12 }}>Назад</Btn>
-
-          {current ? (
-            <button onClick={() => setPhotos(p => { const c = {...p}; delete c[shot.n]; return c; })}
-              style={{ ...display, fontSize:12, width:74, height:74, borderRadius:"50%", background:"transparent", color:"#fff", border:"2px solid #5A6570", cursor:"pointer" }}>
-              Пере&#8209;снять
-            </button>
-          ) : (
-            <button onClick={shoot} disabled={camState !== "live"} aria-label="Снять кадр"
-              style={{ width:74, height:74, borderRadius:"50%", background: camState === "live" ? T.amber : "#3A434C", border:"4px solid #fff", cursor: camState === "live" ? "pointer" : "default" }} />
-          )}
-
-          <Btn variant="dark" onClick={() => setIdx(Math.min(shots.length-1, idx+1))} disabled={idx === shots.length-1} style={{ flex:1, minHeight:48, fontSize:12 }}>Дальше</Btn>
-        </div>
-
-        {saveErr ? <div style={{ ...body, color:T.amber, fontSize:12, marginTop:12 }}>{saveErr}</div> : null}
-
-        <div style={{ display:"flex", gap:8, marginTop:14 }}>
-          <Btn variant="dark" onClick={onCancel} style={{ flex:1, minHeight:46, fontSize:12 }}>Прервать</Btn>
-          <Btn onClick={finish} disabled={done === 0 || saving}
-            style={{ flex:2, minHeight:46, fontSize:13, background:T.amber, color:T.ink, border:`1px solid ${T.amber}` }}>
-            {saving ? "Сохраняю…" : `Завершить · ${done}/${shots.length}`}
-          </Btn>
-        </div>
-      </div>
-    </div>
-  );
 }
 
-/* ---------- карточка и форма ---------- */
-function UnitCard({ u, last, onEdit, onCapture }) {
-  return (
-    <div style={{ background:T.surface, border:`1px solid ${T.line}`, marginBottom:10, display:"flex" }}>
-      <div style={{ width:6, background: last ? T.ok : T.amber }} />
-      <div style={{ flex:1, padding:"14px 14px 12px" }}>
-        <div style={{ ...display, fontSize:24, lineHeight:1 }}>{u.reg}</div>
-        <div style={{ ...body, fontSize:13, color:T.muted, marginTop:6 }}>
-          {[u.type, u.brand].filter(Boolean).join(" · ") || "без описания"}
-        </div>
-        <div style={{ ...body, fontSize:12, color: last ? T.ok : T.muted, marginTop:8, paddingTop:8, borderTop:`1px dashed ${T.line}` }}>
-          {last ? `Снимали ${fmtDate(last.date)}${last.driver ? " · " + last.driver : ""} · ${last.count} кадров` : "Съёмок ещё не было"}
-        </div>
-        <div style={{ display:"flex", gap:8, marginTop:12 }}>
-          <Btn style={{ flex:2, minHeight:46, fontSize:12 }} onClick={() => onCapture(u)}>Снять</Btn>
-          <Btn variant="ghost" style={{ flex:1, minHeight:46, fontSize:12 }} onClick={() => onEdit(u)}>Изменить</Btn>
-        </div>
-      </div>
-    </div>
-  );
+/* ---------------- съёмка ---------------- */
+var C = { unit:null, kind:'trailer', shots:[], idx:0, photos:{}, prev:null, stream:null, live:false };
+var capEl = document.getElementById('cap');
+var video = document.getElementById('cam');
+
+function startCapture(unit){
+  var meta = lastFor(unit.id);
+  C.unit = unit; C.kind = S.kind; C.shots = shotsFor(S.kind);
+  C.idx = 0; C.photos = {}; C.prev = null; C.live = false;
+  document.getElementById('capErr').textContent = '';
+  capEl.classList.add('on');
+  drawStep();
+  if (meta) dbGet('shots:'+meta.id).then(function(s){ C.prev = s; drawStep(); });
+
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920}},audio:false})
+    .then(function(st){
+      C.stream = st; video.srcObject = st;
+      var p = video.play(); if (p && p.catch) p.catch(function(){});
+      C.live = true; drawStep();
+    })
+    .catch(function(e){
+      C.live = false;
+      document.getElementById('capFallbackMsg').textContent =
+        (location.protocol === 'https:' ? 'Разрешите доступ к камере в настройках браузера или снимите обычной камерой телефона.'
+                                        : 'Камера работает только по https. Откройте сайт по адресу, который начинается с https.');
+      drawStep();
+    });
 }
 
-function UnitForm({ initial, kind, existing, onSave, onDelete, onCancel }) {
-  const [reg, setReg] = useState(initial ? initial.reg : "");
-  const [type, setType] = useState(initial ? initial.type : (kind === "trailer" ? TRAILER_TYPES[0] : TRACTOR_TYPES[0]));
-  const [brand, setBrand] = useState(initial ? initial.brand : (kind === "tractor" ? "MAN TGX" : ""));
-  const [note, setNote] = useState(initial ? initial.note : "");
-  const [err, setErr] = useState("");
-  const types = kind === "trailer" ? TRAILER_TYPES : TRACTOR_TYPES;
-
-  const submit = () => {
-    const r = normReg(reg);
-    if (!r) return setErr("Введите регистрационный номер.");
-    if (existing.find(u => u.reg === r && (!initial || u.id !== initial.id))) return setErr("Такой номер уже есть в базе.");
-    onSave({ id: initial ? initial.id : String(Date.now()), reg:r, type, brand:brand.trim(), note:note.trim() });
-  };
-
-  return (
-    <div style={{ padding:16 }}>
-      <div style={{ ...display, fontSize:20, marginBottom:18 }}>
-        {initial ? "Изменить" : (kind === "trailer" ? "Новый прицеп" : "Новый тягач")}
-      </div>
-      <Field label="Регистрационный номер">
-        <input style={{ ...inputStyle, ...display, fontSize:22 }} value={reg} autoCapitalize="characters"
-          onChange={e => { setReg(e.target.value); setErr(""); }} placeholder={kind === "trailer" ? "WGM 5842X" : "AB 1234-7"} />
-      </Field>
-      <Field label="Тип">
-        <select style={inputStyle} value={type} onChange={e => setType(e.target.value)}>
-          {types.map(t => <option key={t}>{t}</option>)}
-        </select>
-      </Field>
-      <Field label={kind === "tractor" ? "Модель" : "Марка и модель"}>
-        <input style={inputStyle} value={brand} onChange={e => setBrand(e.target.value)} placeholder={kind === "trailer" ? "Schmitz SCS 24" : "MAN TGX 18.510"} />
-        {kind === "tractor" ? (
-          <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>
-            {MAN_MODELS.map(m => {
-              const on = brand.startsWith(m);
-              return (
-                <button key={m} onClick={() => setBrand(m)}
-                  style={{ ...display, fontSize:12, padding:"9px 12px", background: on ? T.ink : "transparent", color: on ? "#fff" : T.muted, border:`1px solid ${on ? T.ink : T.line}`, borderRadius:2, cursor:"pointer" }}>
-                  {m.replace("MAN ", "")}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </Field>
-      <Field label="Примечание">
-        <input style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="Известные дефекты, особенности" />
-      </Field>
-      {err ? <div style={{ ...body, color:T.red, fontSize:13, marginBottom:12 }}>{err}</div> : null}
-      <div style={{ display:"flex", gap:8 }}>
-        <Btn onClick={submit} style={{ flex:2 }}>Сохранить</Btn>
-        <Btn variant="ghost" onClick={onCancel} style={{ flex:1 }}>Отмена</Btn>
-      </div>
-      {initial ? <Btn variant="danger" onClick={() => onDelete(initial.id)} style={{ width:"100%", marginTop:10 }}>Удалить из базы</Btn> : null}
-    </div>
-  );
+function stopCapture(){
+  if (C.stream){ C.stream.getTracks().forEach(function(t){ t.stop(); }); C.stream = null; }
+  capEl.classList.remove('on');
 }
 
-/* ---------- приложение ---------- */
-function App() {
-  const [units, setUnits] = useState(EMPTY);
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saveError, setSaveError] = useState(false);
-  const [kind, setKind] = useState("trailer");
-  const [screen, setScreen] = useState("list");
-  const [editing, setEditing] = useState(null);
-  const [target, setTarget] = useState(null);
-  const [prevSession, setPrevSession] = useState(null);
-  const [q, setQ] = useState("");
+function drawStep(){
+  var s = C.shots[C.idx], got = C.photos[s.n];
+  document.getElementById('capN').textContent = ('0'+s.n).slice(-2);
+  document.getElementById('capName').textContent = s.name;
+  document.getElementById('capHint').textContent = s.hint;
+  var hold = document.getElementById('capHold');
+  hold.textContent = s.hold === 'l' ? 'боком' : 'стоя';
+  hold.className = 'hold' + (s.hold === 'l' ? ' land' : '');
 
-  useEffect(() => {
-    (async () => {
-      const u = (await sGet(KEY_UNITS)) || EMPTY;
-      const s = (await sGet(KEY_INDEX)) || [];
-      setUnits({ trailers: u.trailers || [], tractors: u.tractors || [] });
-      setSessions(s);
-      setLoading(false);
-    })();
-  }, []);
+  var img = document.getElementById('capShot');
+  img.style.display = got ? 'block' : 'none';
+  if (got) img.src = got;
+  video.style.display = got ? 'none' : 'block';
+  document.getElementById('capSvg').style.display = got ? 'none' : 'block';
+  document.getElementById('capShoot').style.display = got ? 'none' : 'block';
+  document.getElementById('capRedo').style.display = got ? 'block' : 'none';
+  document.getElementById('capShoot').disabled = !C.live;
+  document.getElementById('capFallback').style.display = (!C.live && !got) ? 'flex' : 'none';
 
-  const listKey = kind === "trailer" ? "trailers" : "tractors";
-  const list = units[listKey];
+  var th = document.getElementById('capThumb');
+  var prevPhoto = C.prev && C.prev.photos ? C.prev.photos[s.n] : null;
+  if (prevPhoto && !got){ th.style.display='block'; document.getElementById('capThumbImg').src = prevPhoto; }
+  else th.style.display = 'none';
 
-  const lastByUnit = useMemo(() => {
-    const m = {};
-    sessions.forEach(s => { if (!m[s.unitId]) m[s.unitId] = s; });
-    return m;
-  }, [sessions]);
+  document.getElementById('capPrev').disabled = C.idx === 0;
+  document.getElementById('capNext').disabled = C.idx === C.shots.length - 1;
 
-  const filtered = useMemo(() => {
-    const s = q.toUpperCase().trim();
-    const arr = s ? list.filter(u => u.reg.includes(s) || (u.brand || "").toUpperCase().includes(s)) : list;
-    return [...arr].sort((a,b) => a.reg.localeCompare(b.reg));
-  }, [list, q]);
+  var done = Object.keys(C.photos).length;
+  var d = document.getElementById('capDone');
+  d.textContent = 'Завершить · ' + done + '/' + C.shots.length;
+  d.disabled = done === 0;
 
-  const persist = async (next) => { setUnits(next); setSaveError(!(await sSet(KEY_UNITS, next))); };
+  var p = '';
+  C.shots.forEach(function(x){
+    p += '<i class="' + (C.photos[x.n] ? 'done' : (x.n === s.n ? 'cur' : '')) + '"></i>';
+  });
+  document.getElementById('capProg').innerHTML = p;
 
-  const handleSave = (unit) => {
-    const arr = list.some(u => u.id === unit.id) ? list.map(u => u.id === unit.id ? unit : u) : [...list, unit];
-    persist({ ...units, [listKey]: arr });
-    setScreen("list"); setEditing(null);
-  };
-
-  const startCapture = async (u) => {
-    const meta = lastByUnit[u.id];
-    setPrevSession(meta ? await sGet("shots:" + meta.id) : null);
-    setTarget(u); setScreen("capture");
-  };
-
-  if (screen === "capture" && target) {
-    return <CaptureScreen unit={target} kind={kind} prevSession={prevSession}
-      onCancel={() => { setScreen("list"); setTarget(null); }}
-      onFinish={(meta) => { setSessions(s => [meta, ...s]); setScreen("list"); setTarget(null); }} />;
-  }
-
-  return (
-    <div style={{ ...body, background:T.bg, minHeight:"100vh", color:T.ink }}>
-      <header style={{ background:T.surface, borderBottom:`1px solid ${T.line}` }}>
-        <MarkerStripe />
-        <div style={{ padding:"14px 16px 12px" }}>
-          <div style={{ ...display, fontSize:19, lineHeight:1 }}>Приёмка</div>
-          <div style={{ ...body, fontSize:12, color:T.muted, marginTop:4 }}>Съёмка по контуру, база машин</div>
-        </div>
-        <div style={{ display:"flex", borderTop:`1px solid ${T.line}` }}>
-          {[{ k:"trailer", label:`Прицепы${units.trailers.length ? " · " + units.trailers.length : ""}` },
-            { k:"tractor", label:`Тягачи${units.tractors.length ? " · " + units.tractors.length : ""}` }].map(t => (
-            <button key={t.k} onClick={() => { setKind(t.k); setScreen("list"); }}
-              style={{ ...display, flex:1, padding:"14px 8px", fontSize:13, background: kind === t.k ? T.ink : "transparent", color: kind === t.k ? "#fff" : T.muted, border:"none", cursor:"pointer" }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      {saveError ? (
-        <div style={{ ...body, background:T.red, color:"#fff", padding:"10px 16px", fontSize:13 }}>Данные не сохранились. Повторите ввод.</div>
-      ) : null}
-
-      {loading ? (
-        <div style={{ ...body, padding:24, color:T.muted, fontSize:14 }}>Загружаю базу…</div>
-      ) : screen === "form" ? (
-        <UnitForm initial={editing} kind={kind} existing={list} onSave={handleSave}
-          onDelete={(id) => { persist({ ...units, [listKey]: list.filter(u => u.id !== id) }); setScreen("list"); setEditing(null); }}
-          onCancel={() => { setScreen("list"); setEditing(null); }} />
-      ) : (
-        <div style={{ padding:16 }}>
-          {list.length > 3 ? (
-            <input style={{ ...inputStyle, marginBottom:12 }} value={q} onChange={e => setQ(e.target.value)} placeholder="Поиск по номеру или марке" />
-          ) : null}
-
-          {filtered.length === 0 ? (
-            <div style={{ background:T.surface, border:`1px dashed ${T.line}`, padding:24, textAlign:"center", marginBottom:12 }}>
-              <div style={{ ...display, fontSize:15, marginBottom:6 }}>{list.length === 0 ? "База пустая" : "Ничего не найдено"}</div>
-              <div style={{ ...body, fontSize:13, color:T.muted }}>
-                {list.length === 0 ? "Добавьте первый номер — на него повесятся съёмки." : "Измените запрос."}
-              </div>
-            </div>
-          ) : filtered.map(u => (
-            <UnitCard key={u.id} u={u} last={lastByUnit[u.id]}
-              onEdit={x => { setEditing(x); setScreen("form"); }} onCapture={startCapture} />
-          ))}
-
-          <Btn onClick={() => { setEditing(null); setScreen("form"); }} style={{ width:"100%", marginTop:6 }}>
-            + {kind === "trailer" ? "Добавить прицеп" : "Добавить тягач"}
-          </Btn>
-          <div style={{ ...body, fontSize:12, color:T.muted, marginTop:18, lineHeight:1.5 }}>
-            Комплекты хранятся на устройстве. При следующей съёмке прошлый кадр показывается в углу экрана.
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  drawContour(s);
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+function drawContour(s){
+  var view = document.getElementById('capView');
+  var svg = document.getElementById('capSvg');
+  var w = view.clientWidth, h = view.clientHeight;
+  if (!w || !h) return;
+  svg.setAttribute('width', w); svg.setAttribute('height', h);
+
+  var fill = 0.86, cw = w * fill, ch = cw / s.ratio;
+  if (ch > h * fill){ ch = h * fill; cw = ch * s.ratio; }
+  var x = (w - cw) / 2, y = (h - ch) / 2, d;
+
+  if (s.frame === 'corner')
+    d = 'M '+x+' '+(y+ch*0.06)+' L '+(x+cw)+' '+(y+ch*0.2)+' L '+(x+cw)+' '+(y+ch)+' L '+x+' '+(y+ch*0.94)+' Z';
+  else if (s.frame === 'cornerL')
+    d = 'M '+x+' '+(y+ch*0.2)+' L '+(x+cw)+' '+(y+ch*0.06)+' L '+(x+cw)+' '+(y+ch*0.94)+' L '+x+' '+(y+ch)+' Z';
+  else
+    d = 'M '+x+' '+y+' L '+(x+cw)+' '+y+' L '+(x+cw)+' '+(y+ch)+' L '+x+' '+(y+ch)+' Z';
+
+  var c = 26, cx = x + cw/2, cy = y + ch/2;
+  var marks = [[x,y,1,1],[x+cw,y,-1,1],[x,y+ch,1,-1],[x+cw,y+ch,-1,-1]], g = '';
+  marks.forEach(function(m){
+    g += '<line x1="'+m[0]+'" y1="'+m[1]+'" x2="'+(m[0]+c*m[2])+'" y2="'+m[1]+'"/>'
+       + '<line x1="'+m[0]+'" y1="'+m[1]+'" x2="'+m[0]+'" y2="'+(m[1]+c*m[3])+'"/>';
+  });
+
+  svg.innerHTML =
+      '<defs><mask id="cut"><rect width="'+w+'" height="'+h+'" fill="#fff"/>'
+    + '<path d="'+d+'" fill="#000"/></mask></defs>'
+    + '<rect width="'+w+'" height="'+h+'" fill="rgba(16,20,24,.55)" mask="url(#cut)"/>'
+    + '<path d="'+d+'" fill="none" stroke="#FFB020" stroke-width="3" stroke-dasharray="14 10"/>'
+    + '<g stroke="#FFB020" stroke-width="5" stroke-linecap="square">'+g+'</g>'
+    + '<line x1="'+cx+'" y1="'+(cy-14)+'" x2="'+cx+'" y2="'+(cy+14)+'" stroke="#FFB020" stroke-width="2" opacity=".8"/>'
+    + '<line x1="'+(cx-14)+'" y1="'+cy+'" x2="'+(cx+14)+'" y2="'+cy+'" stroke="#FFB020" stroke-width="2" opacity=".8"/>';
+}
+
+function downscale(src, sw, sh){
+  var max = 1100, sc = Math.min(1, max / Math.max(sw, sh));
+  var cv = document.createElement('canvas');
+  cv.width = Math.round(sw * sc); cv.height = Math.round(sh * sc);
+  cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
+  return cv.toDataURL('image/jpeg', 0.62);
+}
+
+document.getElementById('capShoot').onclick = function(){
+  if (!video.videoWidth) return;
+  C.photos[C.shots[C.idx].n] = downscale(video, video.videoWidth, video.videoHeight);
+  drawStep();
+};
+document.getElementById('capRedo').onclick = function(){
+  delete C.photos[C.shots[C.idx].n]; drawStep();
+};
+document.getElementById('capPrev').onclick = function(){ if (C.idx>0){ C.idx--; drawStep(); } };
+document.getElementById('capNext').onclick = function(){ if (C.idx<C.shots.length-1){ C.idx++; drawStep(); } };
+document.getElementById('capCancel').onclick = function(){ stopCapture(); };
+document.getElementById('capFile').onchange = function(ev){
+  var f = ev.target.files && ev.target.files[0]; if (!f) return;
+  var fr = new FileReader();
+  fr.onload = function(){
+    var im = new Image();
+    im.onload = function(){ C.photos[C.shots[C.idx].n] = downscale(im, im.width, im.height); drawStep(); };
+    im.src = fr.result;
+  };
+  fr.readAsDataURL(f);
+};
+
+document.getElementById('capDone').onclick = function(){
+  var id = String(Date.now());
+  var count = Object.keys(C.photos).length;
+  var session = { id:id, unitId:C.unit.id, reg:C.unit.reg, kind:C.kind, driver:'',
+    date:new Date().toISOString(), photos:C.photos, count:count };
+  document.getElementById('capDone').disabled = true;
+  document.getElementById('capDone').textContent = 'Сохраняю…';
+  dbSet('shots:'+id, session).then(function(ok){
+    if (!ok){
+      document.getElementById('capErr').textContent = 'Комплект не сохранился. Освободите место и повторите.';
+      document.getElementById('capDone').disabled = false;
+      return drawStep();
+    }
+    var meta = { id:id, unitId:C.unit.id, reg:C.unit.reg, kind:C.kind, driver:'',
+      date:session.date, count:count };
+    S.sessions.unshift(meta);
+    return dbSet(K_INDEX, S.sessions.slice(0,500)).then(function(){
+      stopCapture(); render();
+    });
+  });
+};
+
+window.addEventListener('resize', function(){ if (capEl.classList.contains('on')) drawContour(C.shots[C.idx]); });
+window.addEventListener('orientationchange', function(){
+  setTimeout(function(){ if (capEl.classList.contains('on')) drawContour(C.shots[C.idx]); }, 300);
+});
+
+/* ---------------- старт ---------------- */
+Promise.all([dbGet(K_UNITS), dbGet(K_INDEX)]).then(function(r){
+  var u = r[0] || {};
+  S.units = { trailers: u.trailers || [], tractors: u.tractors || [] };
+  S.sessions = r[1] || [];
+  render();
+}).catch(function(){ render(); });
 </script>
 </body>
 </html>
