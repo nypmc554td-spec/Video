@@ -140,8 +140,8 @@
     </div>
     <div class="turn" id="capTurn">
       <div>
-        <div class="disp" style="font-size:20px;color:var(--amber);margin-bottom:10px">Поверните телефон</div>
-        <div style="font-size:14px;color:#A7ADB4">Снимаем только вертикально — так кадры сходятся между собой.</div>
+        <div class="disp" id="capTurnTitle" style="font-size:26px;color:var(--amber);margin-bottom:10px">Поверните телефон</div>
+        <div style="font-size:14px;color:#A7ADB4" id="capTurnMsg"></div>
       </div>
     </div>
   </div>
@@ -173,37 +173,37 @@ var TRAILER_TYPES = ['Тент','Рефрижератор','Изотерм','П�
 var TRACTOR_TYPES = ['Тягач 4x2','Тягач 6x2','Тягач 6x4'];
 var MAN_MODELS = ['MAN TGX','MAN TGS','MAN TGM','MAN TGL'];
 
-/* ratio — ширина/высота контура. Всё снимается вертикально. */
+/* ratio — ширина/высота контура. hold: 'l' — телефон боком, 'p' — вертикально. */
 var TRAILER_SHOTS = [
-  {n:1, name:'Передняя стенка',        hint:'Стенка целиком, стоять по центру', dist:'4 м',   frame:'rect',    ratio:0.62},
-  {n:2, name:'Левый борт: перёд',      hint:'Первая треть борта',               dist:'4 м',   frame:'rect',    ratio:1.10},
-  {n:3, name:'Левый борт: середина',   hint:'Средняя треть борта',              dist:'4 м',   frame:'rect',    ratio:1.10},
-  {n:4, name:'Левый борт: зад',        hint:'Последняя треть борта',            dist:'4 м',   frame:'rect',    ratio:1.10},
-  {n:5, name:'Задние двери',           hint:'Двери закрыты, номер читается',    dist:'3,5 м', frame:'rect',    ratio:0.62},
-  {n:6, name:'Правый борт: зад',       hint:'Зеркально кадру 4',                dist:'4 м',   frame:'rect',    ratio:1.10},
-  {n:7, name:'Правый борт: середина',  hint:'Зеркально кадру 3',                dist:'4 м',   frame:'rect',    ratio:1.10},
-  {n:8, name:'Правый борт: перёд',     hint:'Зеркально кадру 2',                dist:'4 м',   frame:'rect',    ratio:1.10},
-  {n:9, name:'Угол передний правый',   hint:'В кадре стенка и борт разом',      dist:'4 м',   frame:'corner',  ratio:0.95},
-  {n:10,name:'Угол задний левый',      hint:'В кадре двери и борт разом',       dist:'4 м',   frame:'cornerL', ratio:0.95},
-  {n:11,name:'Колёса слева',           hint:'Все оси в кадре, диски видно',     dist:'2 м',   frame:'rect',    ratio:1.40},
-  {n:12,name:'Колёса справа',          hint:'Все оси в кадре, диски видно',     dist:'2 м',   frame:'rect',    ratio:1.40},
-  {n:13,name:'Опорные ноги, шкворень', hint:'Присесть, снимать снизу вверх',    dist:'1,5 м', frame:'rect',    ratio:1.00},
-  {n:14,name:'Номер и таблички',       hint:'Номер должен читаться полностью',  dist:'0,8 м', frame:'rect',    ratio:1.40}
+  {n:1, name:'Передняя стенка',        hint:'Стенка целиком, стоять по центру', dist:'3 м',   hold:'p', frame:'rect',    ratio:0.62},
+  {n:2, name:'Левый борт: перёд',      hint:'Первая треть борта',               dist:'3 м',   hold:'l', frame:'rect',    ratio:1.10},
+  {n:3, name:'Левый борт: середина',   hint:'Средняя треть борта',              dist:'3 м',   hold:'l', frame:'rect',    ratio:1.10},
+  {n:4, name:'Левый борт: зад',        hint:'Последняя треть борта',            dist:'3 м',   hold:'l', frame:'rect',    ratio:1.10},
+  {n:5, name:'Задние двери',           hint:'Двери закрыты, номер читается',    dist:'3 м',   hold:'p', frame:'rect',    ratio:0.62},
+  {n:6, name:'Правый борт: зад',       hint:'Зеркально кадру 4',                dist:'3 м',   hold:'l', frame:'rect',    ratio:1.10},
+  {n:7, name:'Правый борт: середина',  hint:'Зеркально кадру 3',                dist:'3 м',   hold:'l', frame:'rect',    ratio:1.10},
+  {n:8, name:'Правый борт: перёд',     hint:'Зеркально кадру 2',                dist:'3 м',   hold:'l', frame:'rect',    ratio:1.10},
+  {n:9, name:'Угол передний правый',   hint:'В кадре стенка и борт разом',      dist:'3,5 м', hold:'l', frame:'corner',  ratio:1.20},
+  {n:10,name:'Угол задний левый',      hint:'В кадре двери и борт разом',       dist:'3,5 м', hold:'l', frame:'cornerL', ratio:1.20},
+  {n:11,name:'Колёса слева',           hint:'Все оси в кадре, диски видно',     dist:'1,5 м', hold:'l', frame:'rect',    ratio:1.80},
+  {n:12,name:'Колёса справа',          hint:'Все оси в кадре, диски видно',     dist:'1,5 м', hold:'l', frame:'rect',    ratio:1.80},
+  {n:13,name:'Опорные ноги, шкворень', hint:'Присесть, снимать снизу вверх',    dist:'1,5 м', hold:'p', frame:'rect',    ratio:1.00},
+  {n:14,name:'Номер и таблички',       hint:'Номер должен читаться полностью',  dist:'0,6 м', hold:'l', frame:'rect',    ratio:1.80}
 ];
 
 var TRACTOR_SHOTS = [
-  {n:1, name:'Перёд: решётка, бампер', hint:'По центру, кабина целиком',       dist:'3 м',   frame:'rect',    ratio:0.70},
-  {n:2, name:'Слева: кабина',          hint:'Дверь, зеркала, крыло',           dist:'3,5 м', frame:'rect',    ratio:1.00},
-  {n:3, name:'Слева: бак и рама',      hint:'Бак, ступени, рама',              dist:'3,5 м', frame:'rect',    ratio:1.00},
-  {n:4, name:'Зад кабины и седло',     hint:'Седло, шланги, площадка',         dist:'2,5 м', frame:'rect',    ratio:0.90},
-  {n:5, name:'Справа: бак и рама',     hint:'Зеркально кадру 3',               dist:'3,5 м', frame:'rect',    ratio:1.00},
-  {n:6, name:'Справа: кабина',         hint:'Зеркально кадру 2',               dist:'3,5 м', frame:'rect',    ratio:1.00},
-  {n:7, name:'Угол передний левый',    hint:'В кадре перёд и борт разом',      dist:'3,5 м', frame:'cornerL', ratio:0.95},
-  {n:8, name:'Угол задний правый',     hint:'В кадре седло и борт разом',      dist:'3,5 м', frame:'corner',  ratio:0.95},
-  {n:9, name:'Лобовое стекло',         hint:'Сколы и трещины, чуть под углом', dist:'1,5 м', frame:'rect',    ratio:1.30},
-  {n:10,name:'Колёса слева',           hint:'Обе оси, диски и резина',         dist:'1,5 м', frame:'rect',    ratio:1.40},
-  {n:11,name:'Колёса справа',          hint:'Обе оси, диски и резина',         dist:'1,5 м', frame:'rect',    ratio:1.40},
-  {n:12,name:'Салон: панель, сиденья', hint:'От двери, одним заходом',         dist:'1 м',   frame:'rect',    ratio:0.80}
+  {n:1, name:'Перёд: решётка, бампер', hint:'По центру, кабина целиком',       dist:'2,5 м', hold:'p', frame:'rect',    ratio:0.70},
+  {n:2, name:'Слева: кабина',          hint:'Дверь, зеркала, крыло',           dist:'2,5 м', hold:'l', frame:'rect',    ratio:1.20},
+  {n:3, name:'Слева: бак и рама',      hint:'Бак, ступени, рама',              dist:'2,5 м', hold:'l', frame:'rect',    ratio:1.20},
+  {n:4, name:'Зад кабины и седло',     hint:'Седло, шланги, площадка',         dist:'2 м',   hold:'l', frame:'rect',    ratio:1.30},
+  {n:5, name:'Справа: бак и рама',     hint:'Зеркально кадру 3',               dist:'2,5 м', hold:'l', frame:'rect',    ratio:1.20},
+  {n:6, name:'Справа: кабина',         hint:'Зеркально кадру 2',               dist:'2,5 м', hold:'l', frame:'rect',    ratio:1.20},
+  {n:7, name:'Угол передний левый',    hint:'В кадре перёд и борт разом',      dist:'3 м',   hold:'l', frame:'cornerL', ratio:1.20},
+  {n:8, name:'Угол задний правый',     hint:'В кадре седло и борт разом',      dist:'3 м',   hold:'l', frame:'corner',  ratio:1.20},
+  {n:9, name:'Лобовое стекло',         hint:'Сколы и трещины, чуть под углом', dist:'1,2 м', hold:'l', frame:'rect',    ratio:1.70},
+  {n:10,name:'Колёса слева',           hint:'Обе оси, диски и резина',         dist:'1,5 м', hold:'l', frame:'rect',    ratio:1.80},
+  {n:11,name:'Колёса справа',          hint:'Обе оси, диски и резина',         dist:'1,5 м', hold:'l', frame:'rect',    ratio:1.80},
+  {n:12,name:'Салон: панель, сиденья', hint:'От двери, одним заходом',         dist:'1 м',   hold:'p', frame:'rect',    ratio:0.80}
 ];
 
 function shotsFor(k){ return k === 'trailer' ? TRAILER_SHOTS : TRACTOR_SHOTS; }
@@ -312,7 +312,7 @@ function listHTML(){
 
   h += '<button class="btn" id="add" style="margin-top:6px">+ '
      + (S.kind === 'trailer' ? 'Добавить прицеп' : 'Добавить тягач') + '</button>'
-     + '<div class="note">Снимать только вертикально. Комплекты хранятся на устройстве, при следующей съёмке прошлый кадр показывается в углу.</div></div>';
+     + '<div class="note">Приложение само говорит, как держать телефон на каждом кадре. Комплекты хранятся на устройстве, при следующей съёмке прошлый кадр показывается в углу.</div></div>';
   return h;
 }
 
@@ -490,8 +490,17 @@ function drawStep(){
 }
 
 function checkOrientation(){
+  var s = C.shots[C.idx];
   var land = view.clientWidth > view.clientHeight;
-  document.getElementById('capTurn').className = 'turn' + (land ? ' on' : '');
+  var want = s.hold === 'l';
+  var bad = land !== want;
+  document.getElementById('capTurn').className = 'turn' + (bad ? ' on' : '');
+  if (bad){
+    document.getElementById('capTurnTitle').textContent = want ? 'Поверните боком' : 'Поставьте вертикально';
+    document.getElementById('capTurnMsg').textContent = want
+      ? 'Этот кадр широкий — боком помещается больше, и отходить дальше не придётся.'
+      : 'Этот кадр высокий — вертикально помещается больше.';
+  }
 }
 
 function drawContour(s){
