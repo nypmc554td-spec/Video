@@ -70,29 +70,32 @@
   /* съёмка */
   #cap{position:fixed;inset:0;background:var(--ink);display:none;flex-direction:column;z-index:10}
   #cap.on{display:flex}
-  .cap-head{padding:12px 14px;color:#fff;display:flex;align-items:center;gap:12px;flex:0 0 auto}
-  .cap-n{font-family:var(--disp);font-size:26px;color:var(--amber);line-height:1}
+  .cap-head{padding:10px 12px;color:#fff;display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .cap-n{font-family:var(--disp);font-size:24px;color:var(--amber);line-height:1}
   .cap-name{font-size:14px;font-weight:600}
   .cap-hint{font-size:12px;color:#A7ADB4}
-  .hold{font-family:var(--disp);font-size:12px;padding:4px 8px;background:#2A323A;color:#fff;white-space:nowrap}
-  .hold.land{background:var(--amber);color:var(--ink)}
+  .dist{font-family:var(--disp);font-size:15px;padding:5px 9px;background:var(--amber);
+    color:var(--ink);white-space:nowrap;line-height:1}
   .view{position:relative;flex:1 1 auto;background:#000;overflow:hidden;min-height:200px}
   .view video,.view img.shot{width:100%;height:100%;display:block}
   .view video{object-fit:cover}
   .view img.shot{object-fit:contain}
   .view svg{position:absolute;inset:0;pointer-events:none}
-  .thumb{position:absolute;left:10px;bottom:10px;width:84px;border:2px solid var(--amber)}
+  .thumb{position:absolute;left:8px;bottom:8px;width:76px;border:2px solid var(--amber)}
   .thumb img{width:100%;display:block}
   .thumb span{display:block;font-family:var(--disp);font-size:9px;background:var(--amber);
     color:var(--ink);text-align:center;padding:2px 0}
   .fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     padding:24px;text-align:center;color:#fff}
-  .cap-foot{padding:12px 14px 18px;flex:0 0 auto}
-  .prog{display:flex;gap:3px;margin-bottom:12px}
+  .turn{position:absolute;inset:0;background:rgba(16,20,24,.92);display:none;
+    align-items:center;justify-content:center;padding:30px;text-align:center;color:#fff}
+  .turn.on{display:flex}
+  .cap-foot{padding:10px 12px 16px;flex:0 0 auto}
+  .prog{display:flex;gap:3px;margin-bottom:10px}
   .prog i{flex:1;height:4px;background:#2A323A}
   .prog i.done{background:var(--amber)}
   .prog i.cur{background:#5A6570}
-  .ctrl{display:flex;align-items:center;gap:12px}
+  .ctrl{display:flex;align-items:center;gap:10px}
   .ctrl .btn{width:auto;flex:1;min-height:48px;font-size:12px;padding:12px}
   .shutter{width:74px;height:74px;border-radius:50%;background:var(--amber);
     border:4px solid #fff;flex:0 0 auto;cursor:pointer}
@@ -114,7 +117,7 @@
       <div class="cap-name" id="capName"></div>
       <div class="cap-hint" id="capHint"></div>
     </div>
-    <div class="hold" id="capHold"></div>
+    <div class="dist" id="capDist"></div>
   </div>
   <div class="view" id="capView">
     <video id="cam" playsinline muted autoplay></video>
@@ -135,6 +138,12 @@
         </label>
       </div>
     </div>
+    <div class="turn" id="capTurn">
+      <div>
+        <div class="disp" style="font-size:20px;color:var(--amber);margin-bottom:10px">Поверните телефон</div>
+        <div style="font-size:14px;color:#A7ADB4">Снимаем только вертикально — так кадры сходятся между собой.</div>
+      </div>
+    </div>
   </div>
   <div class="cap-foot">
     <div class="prog" id="capProg"></div>
@@ -144,8 +153,8 @@
       <button class="redo" id="capRedo" style="display:none">Пере&#8209;снять</button>
       <button class="btn dark" id="capNext">Дальше</button>
     </div>
-    <div id="capErr" style="color:var(--amber);font-size:12px;margin-top:12px"></div>
-    <div class="row" style="margin-top:14px">
+    <div id="capErr" style="color:var(--amber);font-size:12px;margin-top:10px"></div>
+    <div class="row" style="margin-top:12px">
       <button class="btn dark" id="capCancel" style="flex:1;min-height:46px;font-size:12px">Прервать</button>
       <button class="btn go" id="capDone" style="flex:2;min-height:46px;font-size:13px">Завершить</button>
     </div>
@@ -164,34 +173,37 @@ var TRAILER_TYPES = ['Тент','Рефрижератор','Изотерм','П�
 var TRACTOR_TYPES = ['Тягач 4x2','Тягач 6x2','Тягач 6x4'];
 var MAN_MODELS = ['MAN TGX','MAN TGS','MAN TGM','MAN TGL'];
 
+/* ratio — ширина/высота контура. Всё снимается вертикально. */
 var TRAILER_SHOTS = [
-  {n:1, name:'Передняя стенка',          hint:'Стенка целиком, стоять по центру',               frame:'rect',    ratio:0.66, hold:'p'},
-  {n:2, name:'Левый борт, перёд',        hint:'Перпендикулярно борту, напротив первой трети',   frame:'rect',    ratio:1.7,  hold:'l'},
-  {n:3, name:'Левый борт, зад',          hint:'Перпендикулярно борту, напротив последней трети',frame:'rect',    ratio:1.7,  hold:'l'},
-  {n:4, name:'Задние двери',             hint:'Двери закрыты, номер читается',                  frame:'rect',    ratio:0.66, hold:'p'},
-  {n:5, name:'Правый борт, зад',         hint:'Зеркально кадру 3',                              frame:'rect',    ratio:1.7,  hold:'l'},
-  {n:6, name:'Правый борт, перёд',       hint:'Зеркально кадру 2',                              frame:'rect',    ratio:1.7,  hold:'l'},
-  {n:7, name:'Угол 3/4 передний правый', hint:'В кадре стенка и борт разом',                    frame:'corner',  ratio:1.4,  hold:'l'},
-  {n:8, name:'Угол 3/4 задний левый',    hint:'В кадре двери и борт разом',                     frame:'cornerL', ratio:1.4,  hold:'l'},
-  {n:9, name:'Колёса слева',             hint:'Все оси в кадре, диски видно',                   frame:'rect',    ratio:2.2,  hold:'l'},
-  {n:10,name:'Колёса справа',            hint:'Все оси в кадре, диски видно',                   frame:'rect',    ratio:2.2,  hold:'l'},
-  {n:11,name:'Опорные ноги и шкворень',  hint:'Присесть, снимать снизу вверх',                  frame:'rect',    ratio:1.1,  hold:'p'},
-  {n:12,name:'Номер и таблички',         hint:'Опознавательный кадр, номер полностью',          frame:'rect',    ratio:2.0,  hold:'l'},
-  {n:13,name:'Крыша / тент сверху',      hint:'Если есть доступ, иначе пропустить',             frame:'rect',    ratio:1.9,  hold:'l'}
+  {n:1, name:'Передняя стенка',        hint:'Стенка целиком, стоять по центру', dist:'4 м',   frame:'rect',    ratio:0.62},
+  {n:2, name:'Левый борт: перёд',      hint:'Первая треть борта',               dist:'4 м',   frame:'rect',    ratio:1.10},
+  {n:3, name:'Левый борт: середина',   hint:'Средняя треть борта',              dist:'4 м',   frame:'rect',    ratio:1.10},
+  {n:4, name:'Левый борт: зад',        hint:'Последняя треть борта',            dist:'4 м',   frame:'rect',    ratio:1.10},
+  {n:5, name:'Задние двери',           hint:'Двери закрыты, номер читается',    dist:'3,5 м', frame:'rect',    ratio:0.62},
+  {n:6, name:'Правый борт: зад',       hint:'Зеркально кадру 4',                dist:'4 м',   frame:'rect',    ratio:1.10},
+  {n:7, name:'Правый борт: середина',  hint:'Зеркально кадру 3',                dist:'4 м',   frame:'rect',    ratio:1.10},
+  {n:8, name:'Правый борт: перёд',     hint:'Зеркально кадру 2',                dist:'4 м',   frame:'rect',    ratio:1.10},
+  {n:9, name:'Угол передний правый',   hint:'В кадре стенка и борт разом',      dist:'4 м',   frame:'corner',  ratio:0.95},
+  {n:10,name:'Угол задний левый',      hint:'В кадре двери и борт разом',       dist:'4 м',   frame:'cornerL', ratio:0.95},
+  {n:11,name:'Колёса слева',           hint:'Все оси в кадре, диски видно',     dist:'2 м',   frame:'rect',    ratio:1.40},
+  {n:12,name:'Колёса справа',          hint:'Все оси в кадре, диски видно',     dist:'2 м',   frame:'rect',    ratio:1.40},
+  {n:13,name:'Опорные ноги, шкворень', hint:'Присесть, снимать снизу вверх',    dist:'1,5 м', frame:'rect',    ratio:1.00},
+  {n:14,name:'Номер и таблички',       hint:'Номер должен читаться полностью',  dist:'0,8 м', frame:'rect',    ratio:1.40}
 ];
 
 var TRACTOR_SHOTS = [
-  {n:1, name:'Перёд: решётка, бампер',   hint:'По центру, кабина целиком',          frame:'rect',    ratio:0.7, hold:'p'},
-  {n:2, name:'Левая сторона',            hint:'От бампера до седла',                frame:'rect',    ratio:1.7, hold:'l'},
-  {n:3, name:'Правая сторона',           hint:'Зеркально кадру 2',                  frame:'rect',    ratio:1.7, hold:'l'},
-  {n:4, name:'Зад кабины и седло',       hint:'Седло, шланги, площадка',            frame:'rect',    ratio:0.9, hold:'p'},
-  {n:5, name:'Угол 3/4 передний левый',  hint:'В кадре перёд и борт разом',         frame:'cornerL', ratio:1.4, hold:'l'},
-  {n:6, name:'Угол 3/4 задний правый',   hint:'В кадре седло и борт разом',         frame:'corner',  ratio:1.4, hold:'l'},
-  {n:7, name:'Лобовое стекло',           hint:'Сколы и трещины, снимать под углом', frame:'rect',    ratio:1.9, hold:'l'},
-  {n:8, name:'Колёса слева',             hint:'Обе оси, диски и резина',            frame:'rect',    ratio:2.0, hold:'l'},
-  {n:9, name:'Колёса справа',            hint:'Обе оси, диски и резина',            frame:'rect',    ratio:2.0, hold:'l'},
-  {n:10,name:'Баки и ступени',           hint:'Самое частое место задиров',         frame:'rect',    ratio:1.8, hold:'l'},
-  {n:11,name:'Салон: панель, сиденья',   hint:'От двери, одним заходом',            frame:'rect',    ratio:0.8, hold:'p'}
+  {n:1, name:'Перёд: решётка, бампер', hint:'По центру, кабина целиком',       dist:'3 м',   frame:'rect',    ratio:0.70},
+  {n:2, name:'Слева: кабина',          hint:'Дверь, зеркала, крыло',           dist:'3,5 м', frame:'rect',    ratio:1.00},
+  {n:3, name:'Слева: бак и рама',      hint:'Бак, ступени, рама',              dist:'3,5 м', frame:'rect',    ratio:1.00},
+  {n:4, name:'Зад кабины и седло',     hint:'Седло, шланги, площадка',         dist:'2,5 м', frame:'rect',    ratio:0.90},
+  {n:5, name:'Справа: бак и рама',     hint:'Зеркально кадру 3',               dist:'3,5 м', frame:'rect',    ratio:1.00},
+  {n:6, name:'Справа: кабина',         hint:'Зеркально кадру 2',               dist:'3,5 м', frame:'rect',    ratio:1.00},
+  {n:7, name:'Угол передний левый',    hint:'В кадре перёд и борт разом',      dist:'3,5 м', frame:'cornerL', ratio:0.95},
+  {n:8, name:'Угол задний правый',     hint:'В кадре седло и борт разом',      dist:'3,5 м', frame:'corner',  ratio:0.95},
+  {n:9, name:'Лобовое стекло',         hint:'Сколы и трещины, чуть под углом', dist:'1,5 м', frame:'rect',    ratio:1.30},
+  {n:10,name:'Колёса слева',           hint:'Обе оси, диски и резина',         dist:'1,5 м', frame:'rect',    ratio:1.40},
+  {n:11,name:'Колёса справа',          hint:'Обе оси, диски и резина',         dist:'1,5 м', frame:'rect',    ratio:1.40},
+  {n:12,name:'Салон: панель, сиденья', hint:'От двери, одним заходом',         dist:'1 м',   frame:'rect',    ratio:0.80}
 ];
 
 function shotsFor(k){ return k === 'trailer' ? TRAILER_SHOTS : TRACTOR_SHOTS; }
@@ -230,15 +242,8 @@ function dbSet(k, v){
 var K_UNITS = 'fleet:units', K_INDEX = 'fleet:sessions';
 
 /* ---------------- состояние ---------------- */
-var S = {
-  units:{trailers:[],tractors:[]},
-  sessions:[],
-  kind:'trailer',
-  screen:'list',
-  editing:null,
-  q:'',
-  err:''
-};
+var S = { units:{trailers:[],tractors:[]}, sessions:[], kind:'trailer',
+          screen:'list', editing:null, q:'', err:'' };
 
 function esc(s){
   return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
@@ -255,24 +260,20 @@ function lastFor(id){
   for (var i=0;i<S.sessions.length;i++) if (S.sessions[i].unitId === id) return S.sessions[i];
   return null;
 }
-function saveUnits(){
-  return dbSet(K_UNITS, JSON.parse(JSON.stringify(S.units)));
-}
+function saveUnits(){ return dbSet(K_UNITS, JSON.parse(JSON.stringify(S.units))); }
 
 /* ---------------- отрисовка ---------------- */
 var app = document.getElementById('app');
 
 function render(){
-  var h = '';
-  h += '<header><div class="stripe"></div><div class="head-pad">'
-     + '<div class="disp title">Приёмка</div>'
-     + '<div class="sub">Съёмка по контуру, база машин</div></div><div class="tabs">'
-     + '<button class="tab disp' + (S.kind==='trailer'?' on':'') + '" data-kind="trailer">Прицепы'
-     + (S.units.trailers.length ? ' · ' + S.units.trailers.length : '') + '</button>'
-     + '<button class="tab disp' + (S.kind==='tractor'?' on':'') + '" data-kind="tractor">Тягачи'
-     + (S.units.tractors.length ? ' · ' + S.units.tractors.length : '') + '</button>'
-     + '</div></header>';
-
+  var h = '<header><div class="stripe"></div><div class="head-pad">'
+    + '<div class="disp title">Приёмка</div>'
+    + '<div class="sub">Съёмка по контуру, база машин</div></div><div class="tabs">'
+    + '<button class="tab disp' + (S.kind==='trailer'?' on':'') + '" data-kind="trailer">Прицепы'
+    + (S.units.trailers.length ? ' · ' + S.units.trailers.length : '') + '</button>'
+    + '<button class="tab disp' + (S.kind==='tractor'?' on':'') + '" data-kind="tractor">Тягачи'
+    + (S.units.tractors.length ? ' · ' + S.units.tractors.length : '') + '</button>'
+    + '</div></header>';
   h += S.screen === 'form' ? formHTML() : listHTML();
   app.innerHTML = h;
   bind();
@@ -301,8 +302,7 @@ function listHTML(){
          + '<div class="disp reg">'+esc(u.reg)+'</div>'
          + '<div class="meta">'+esc([u.type,u.brand].filter(Boolean).join(' · ') || 'без описания')+'</div>'
          + '<div class="last">'
-         + (last ? 'Снимали '+fmtDate(last.date)+(last.driver?' · '+esc(last.driver):'')+' · '+last.count+' кадров'
-                 : 'Съёмок ещё не было')
+         + (last ? 'Снимали '+fmtDate(last.date)+' · '+last.count+' кадров' : 'Съёмок ещё не было')
          + '</div><div class="row" style="margin-top:12px">'
          + '<button class="btn" data-shoot="'+u.id+'" style="flex:2;min-height:46px;font-size:12px">Снять</button>'
          + '<button class="btn ghost" data-edit="'+u.id+'" style="flex:1;min-height:46px;font-size:12px">Изменить</button>'
@@ -312,7 +312,7 @@ function listHTML(){
 
   h += '<button class="btn" id="add" style="margin-top:6px">+ '
      + (S.kind === 'trailer' ? 'Добавить прицеп' : 'Добавить тягач') + '</button>'
-     + '<div class="note">Комплекты хранятся на устройстве. При следующей съёмке прошлый кадр показывается в углу экрана.</div></div>';
+     + '<div class="note">Снимать только вертикально. Комплекты хранятся на устройстве, при следующей съёмке прошлый кадр показывается в углу.</div></div>';
   return h;
 }
 
@@ -328,9 +328,7 @@ function formHTML(){
      + (isTrailer ? 'WGM 5842X' : 'AB 1234-7') + '"></label>';
 
   h += '<label class="f"><div class="lab">Тип</div><select class="inp" id="type">';
-  types.forEach(function(t){
-    h += '<option'+(e && e.type===t ? ' selected':'')+'>'+esc(t)+'</option>';
-  });
+  types.forEach(function(t){ h += '<option'+(e && e.type===t ? ' selected':'')+'>'+esc(t)+'</option>'; });
   h += '</select></label>';
 
   h += '<label class="f"><div class="lab">'+(isTrailer?'Марка и модель':'Модель')+'</div>'
@@ -361,9 +359,10 @@ function bind(){
     b.onclick = function(){ S.kind = b.dataset.kind; S.screen='list'; S.err=''; render(); };
   });
   var q = document.getElementById('q');
-  if (q) q.oninput = function(){ S.q = q.value; var p = q.selectionStart; render();
-    var n = document.getElementById('q'); if (n){ n.focus(); n.setSelectionRange(p,p); } };
-
+  if (q) q.oninput = function(){
+    S.q = q.value; var p = q.selectionStart; render();
+    var n = document.getElementById('q'); if (n){ n.focus(); n.setSelectionRange(p,p); }
+  };
   var add = document.getElementById('add');
   if (add) add.onclick = function(){ S.editing = null; S.err=''; S.screen='form'; render(); };
 
@@ -380,9 +379,11 @@ function bind(){
     };
   });
   Array.prototype.forEach.call(app.querySelectorAll('[data-model]'), function(b){
-    b.onclick = function(){ document.getElementById('brand').value = b.dataset.model;
+    b.onclick = function(){
+      document.getElementById('brand').value = b.dataset.model;
       Array.prototype.forEach.call(app.querySelectorAll('[data-model]'), function(x){ x.classList.remove('on'); });
-      b.classList.add('on'); };
+      b.classList.add('on');
+    };
   });
 
   var save = document.getElementById('save');
@@ -390,8 +391,9 @@ function bind(){
     var reg = normReg(document.getElementById('reg').value);
     if (!reg){ S.err = 'Введите регистрационный номер.'; return render(); }
     var list = curList(), e = S.editing;
-    var clash = list.filter(function(u){ return u.reg === reg && (!e || u.id !== e.id); }).length;
-    if (clash){ S.err = 'Такой номер уже есть в базе.'; return render(); }
+    if (list.filter(function(u){ return u.reg === reg && (!e || u.id !== e.id); }).length){
+      S.err = 'Такой номер уже есть в базе.'; return render();
+    }
     var unit = { id: e ? e.id : String(Date.now()), reg: reg,
       type: document.getElementById('type').value,
       brand: document.getElementById('brand').value.trim(),
@@ -405,8 +407,7 @@ function bind(){
   if (cancel) cancel.onclick = function(){ S.editing=null; S.err=''; S.screen='list'; render(); };
   var del = document.getElementById('del');
   if (del) del.onclick = function(){
-    var id = S.editing.id, list = curList();
-    var next = list.filter(function(u){ return u.id !== id; });
+    var id = S.editing.id, next = curList().filter(function(u){ return u.id !== id; });
     if (S.kind === 'trailer') S.units.trailers = next; else S.units.tractors = next;
     saveUnits(); S.editing=null; S.screen='list'; render();
   };
@@ -416,6 +417,7 @@ function bind(){
 var C = { unit:null, kind:'trailer', shots:[], idx:0, photos:{}, prev:null, stream:null, live:false };
 var capEl = document.getElementById('cap');
 var video = document.getElementById('cam');
+var view = document.getElementById('capView');
 
 function startCapture(unit){
   var meta = lastFor(unit.id);
@@ -432,11 +434,12 @@ function startCapture(unit){
       var p = video.play(); if (p && p.catch) p.catch(function(){});
       C.live = true; drawStep();
     })
-    .catch(function(e){
+    .catch(function(){
       C.live = false;
       document.getElementById('capFallbackMsg').textContent =
-        (location.protocol === 'https:' ? 'Разрешите доступ к камере в настройках браузера или снимите обычной камерой телефона.'
-                                        : 'Камера работает только по https. Откройте сайт по адресу, который начинается с https.');
+        (location.protocol === 'https:'
+          ? 'Разрешите доступ к камере в настройках браузера или снимите обычной камерой телефона.'
+          : 'Камера работает только по https. Откройте сайт по адресу, который начинается с https.');
       drawStep();
     });
 }
@@ -451,9 +454,7 @@ function drawStep(){
   document.getElementById('capN').textContent = ('0'+s.n).slice(-2);
   document.getElementById('capName').textContent = s.name;
   document.getElementById('capHint').textContent = s.hint;
-  var hold = document.getElementById('capHold');
-  hold.textContent = s.hold === 'l' ? 'боком' : 'стоя';
-  hold.className = 'hold' + (s.hold === 'l' ? ' land' : '');
+  document.getElementById('capDist').textContent = s.dist;
 
   var img = document.getElementById('capShot');
   img.style.display = got ? 'block' : 'none';
@@ -484,18 +485,24 @@ function drawStep(){
   });
   document.getElementById('capProg').innerHTML = p;
 
+  checkOrientation();
   drawContour(s);
 }
 
+function checkOrientation(){
+  var land = view.clientWidth > view.clientHeight;
+  document.getElementById('capTurn').className = 'turn' + (land ? ' on' : '');
+}
+
 function drawContour(s){
-  var view = document.getElementById('capView');
   var svg = document.getElementById('capSvg');
   var w = view.clientWidth, h = view.clientHeight;
   if (!w || !h) return;
   svg.setAttribute('width', w); svg.setAttribute('height', h);
 
-  var fill = 0.86, cw = w * fill, ch = cw / s.ratio;
-  if (ch > h * fill){ ch = h * fill; cw = ch * s.ratio; }
+  var fillW = 0.97, fillH = 0.94;
+  var cw = w * fillW, ch = cw / s.ratio;
+  if (ch > h * fillH){ ch = h * fillH; cw = ch * s.ratio; }
   var x = (w - cw) / 2, y = (h - ch) / 2, d;
 
   if (s.frame === 'corner')
@@ -505,7 +512,7 @@ function drawContour(s){
   else
     d = 'M '+x+' '+y+' L '+(x+cw)+' '+y+' L '+(x+cw)+' '+(y+ch)+' L '+x+' '+(y+ch)+' Z';
 
-  var c = 26, cx = x + cw/2, cy = y + ch/2;
+  var c = 30, cx = x + cw/2, cy = y + ch/2;
   var marks = [[x,y,1,1],[x+cw,y,-1,1],[x,y+ch,1,-1],[x+cw,y+ch,-1,-1]], g = '';
   marks.forEach(function(m){
     g += '<line x1="'+m[0]+'" y1="'+m[1]+'" x2="'+(m[0]+c*m[2])+'" y2="'+m[1]+'"/>'
@@ -515,24 +522,31 @@ function drawContour(s){
   svg.innerHTML =
       '<defs><mask id="cut"><rect width="'+w+'" height="'+h+'" fill="#fff"/>'
     + '<path d="'+d+'" fill="#000"/></mask></defs>'
-    + '<rect width="'+w+'" height="'+h+'" fill="rgba(16,20,24,.55)" mask="url(#cut)"/>'
-    + '<path d="'+d+'" fill="none" stroke="#FFB020" stroke-width="3" stroke-dasharray="14 10"/>'
-    + '<g stroke="#FFB020" stroke-width="5" stroke-linecap="square">'+g+'</g>'
-    + '<line x1="'+cx+'" y1="'+(cy-14)+'" x2="'+cx+'" y2="'+(cy+14)+'" stroke="#FFB020" stroke-width="2" opacity=".8"/>'
-    + '<line x1="'+(cx-14)+'" y1="'+cy+'" x2="'+(cx+14)+'" y2="'+cy+'" stroke="#FFB020" stroke-width="2" opacity=".8"/>';
+    + '<rect width="'+w+'" height="'+h+'" fill="rgba(16,20,24,.45)" mask="url(#cut)"/>'
+    + '<path d="'+d+'" fill="none" stroke="#FFB020" stroke-width="3" stroke-dasharray="16 11"/>'
+    + '<g stroke="#FFB020" stroke-width="6" stroke-linecap="square">'+g+'</g>'
+    + '<line x1="'+cx+'" y1="'+(cy-16)+'" x2="'+cx+'" y2="'+(cy+16)+'" stroke="#FFB020" stroke-width="2" opacity=".8"/>'
+    + '<line x1="'+(cx-16)+'" y1="'+cy+'" x2="'+(cx+16)+'" y2="'+cy+'" stroke="#FFB020" stroke-width="2" opacity=".8"/>';
 }
 
-function downscale(src, sw, sh){
-  var max = 1100, sc = Math.min(1, max / Math.max(sw, sh));
+/* кадрируем ровно то, что видно на экране — снимок всегда вертикальный */
+function grabPortrait(src, sw, sh){
+  var targetAR = view.clientWidth / view.clientHeight;
+  var sx, sy, cw, chh;
+  if (sw / sh > targetAR){ chh = sh; cw = sh * targetAR; sx = (sw - cw) / 2; sy = 0; }
+  else { cw = sw; chh = sw / targetAR; sx = 0; sy = (sh - chh) / 2; }
+
+  var max = 1400, sc = Math.min(1, max / Math.max(cw, chh));
   var cv = document.createElement('canvas');
-  cv.width = Math.round(sw * sc); cv.height = Math.round(sh * sc);
-  cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
+  cv.width = Math.round(cw * sc); cv.height = Math.round(chh * sc);
+  cv.getContext('2d').drawImage(src, sx, sy, cw, chh, 0, 0, cv.width, cv.height);
   return cv.toDataURL('image/jpeg', 0.62);
 }
 
 document.getElementById('capShoot').onclick = function(){
   if (!video.videoWidth) return;
-  C.photos[C.shots[C.idx].n] = downscale(video, video.videoWidth, video.videoHeight);
+  C.photos[C.shots[C.idx].n] = grabPortrait(video, video.videoWidth, video.videoHeight);
+  if (C.idx < C.shots.length - 1) C.idx++;
   drawStep();
 };
 document.getElementById('capRedo').onclick = function(){
@@ -546,7 +560,10 @@ document.getElementById('capFile').onchange = function(ev){
   var fr = new FileReader();
   fr.onload = function(){
     var im = new Image();
-    im.onload = function(){ C.photos[C.shots[C.idx].n] = downscale(im, im.width, im.height); drawStep(); };
+    im.onload = function(){
+      C.photos[C.shots[C.idx].n] = grabPortrait(im, im.width, im.height);
+      drawStep();
+    };
     im.src = fr.result;
   };
   fr.readAsDataURL(f);
@@ -557,27 +574,26 @@ document.getElementById('capDone').onclick = function(){
   var count = Object.keys(C.photos).length;
   var session = { id:id, unitId:C.unit.id, reg:C.unit.reg, kind:C.kind, driver:'',
     date:new Date().toISOString(), photos:C.photos, count:count };
-  document.getElementById('capDone').disabled = true;
-  document.getElementById('capDone').textContent = 'Сохраняю…';
+  var btn = document.getElementById('capDone');
+  btn.disabled = true; btn.textContent = 'Сохраняю…';
   dbSet('shots:'+id, session).then(function(ok){
     if (!ok){
       document.getElementById('capErr').textContent = 'Комплект не сохранился. Освободите место и повторите.';
-      document.getElementById('capDone').disabled = false;
       return drawStep();
     }
-    var meta = { id:id, unitId:C.unit.id, reg:C.unit.reg, kind:C.kind, driver:'',
-      date:session.date, count:count };
-    S.sessions.unshift(meta);
-    return dbSet(K_INDEX, S.sessions.slice(0,500)).then(function(){
-      stopCapture(); render();
-    });
+    S.sessions.unshift({ id:id, unitId:C.unit.id, reg:C.unit.reg, kind:C.kind,
+      driver:'', date:session.date, count:count });
+    return dbSet(K_INDEX, S.sessions.slice(0,500)).then(function(){ stopCapture(); render(); });
   });
 };
 
-window.addEventListener('resize', function(){ if (capEl.classList.contains('on')) drawContour(C.shots[C.idx]); });
-window.addEventListener('orientationchange', function(){
-  setTimeout(function(){ if (capEl.classList.contains('on')) drawContour(C.shots[C.idx]); }, 300);
-});
+function relayout(){
+  if (!capEl.classList.contains('on')) return;
+  checkOrientation();
+  drawContour(C.shots[C.idx]);
+}
+window.addEventListener('resize', relayout);
+window.addEventListener('orientationchange', function(){ setTimeout(relayout, 300); });
 
 /* ---------------- старт ---------------- */
 Promise.all([dbGet(K_UNITS), dbGet(K_INDEX)]).then(function(r){
