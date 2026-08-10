@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Приёмка</title>
+<meta name="theme-color" content="#101418" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="Приёмка" />
+<link rel="manifest" href='data:application/manifest+json,{"name":"Приёмка","short_name":"Приёмка","display":"standalone","background_color":"%23E3E5E0","theme_color":"%23101418","start_url":"./"}' />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { -webkit-tap-highlight-color: transparent; }
+  html, body, #root { margin:0; padding:0; height:100%; }
+  body { background:#E3E5E0; }
+  button, input, select { font-family:inherit; }
+  :focus-visible { outline:3px solid #FFB020; outline-offset:2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ---------- токены ---------- */
+const T = { bg:"#E3E5E0", surface:"#FFFFFF", ink:"#101418", muted:"#6E7379", line:"#CDD0CA", amber:"#FFB020", red:"#D8402F", ok:"#2F7D5B" };
+const display = { fontFamily:"'Oswald','Arial Narrow',Impact,sans-serif", letterSpacing:"0.04em", textTransform:"uppercase" };
+const body = { fontFamily:"'Inter',system-ui,-apple-system,sans-serif" };
+
+const TRAILER_TYPES = ["Тент","Рефрижератор","Изотерм","Платформа","Самосвал","Цистерна","Контейнеровоз"];
+const TRACTOR_TYPES = ["Тягач 4x2","Тягач 6x2","Тягач 6x4"];
+const MAN_MODELS = ["MAN TGX","MAN TGS","MAN TGM","MAN TGL"];
+
+const TRAILER_SHOTS = [
+  { n:1,  name:"Передняя стенка",           dist:"6 м",        hint:"Стенка целиком, стоять по центру",              frame:"rect",    ratio:0.66, hold:"portrait" },
+  { n:2,  name:"Левый борт, перёд",         dist:"7 м",        hint:"Перпендикулярно борту, напротив первой трети",  frame:"rect",    ratio:1.7,  hold:"landscape" },
+  { n:3,  name:"Левый борт, зад",           dist:"7 м",        hint:"Перпендикулярно борту, напротив последней трети",frame:"rect",   ratio:1.7,  hold:"landscape" },
+  { n:4,  name:"Задние двери",              dist:"5 м",        hint:"Двери закрыты, номер читается",                 frame:"rect",    ratio:0.66, hold:"portrait" },
+  { n:5,  name:"Правый борт, зад",          dist:"7 м",        hint:"Зеркально кадру 3",                             frame:"rect",    ratio:1.7,  hold:"landscape" },
+  { n:6,  name:"Правый борт, перёд",        dist:"7 м",        hint:"Зеркально кадру 2",                             frame:"rect",    ratio:1.7,  hold:"landscape" },
+  { n:7,  name:"Угол 3/4 передний правый",  dist:"6 м",        hint:"В кадре стенка и борт разом",                   frame:"corner",  ratio:1.4,  hold:"landscape" },
+  { n:8,  name:"Угол 3/4 задний левый",     dist:"6 м",        hint:"В кадре двери и борт разом",                    frame:"cornerL", ratio:1.4,  hold:"landscape" },
+  { n:9,  name:"Колёса слева",              dist:"2,5 м",      hint:"Все оси в одном кадре, диски видно",            frame:"rect",    ratio:2.2,  hold:"landscape" },
+  { n:10, name:"Колёса справа",             dist:"2,5 м",      hint:"Все оси в одном кадре, диски видно",            frame:"rect",    ratio:2.2,  hold:"landscape" },
+  { n:11, name:"Опорные ноги и шкворень",   dist:"2 м",        hint:"Присесть, снимать снизу вверх",                 frame:"rect",    ratio:1.1,  hold:"portrait" },
+  { n:12, name:"Номер и таблички",          dist:"1 м",        hint:"Опознавательный кадр, номер полностью",         frame:"rect",    ratio:2.0,  hold:"landscape" },
+  { n:13, name:"Крыша / тент сверху",       dist:"с эстакады", hint:"Если есть доступ, иначе пропустить",             frame:"rect",    ratio:1.9,  hold:"landscape", optional:true },
+];
+
+const TRACTOR_SHOTS = [
+  { n:1,  name:"Перёд: решётка, бампер, фары", dist:"4 м",  hint:"По центру, кабина целиком",           frame:"rect",    ratio:0.7, hold:"portrait" },
+  { n:2,  name:"Левая сторона",                dist:"6 м",  hint:"От бампера до седла",                 frame:"rect",    ratio:1.7, hold:"landscape" },
+  { n:3,  name:"Правая сторона",               dist:"6 м",  hint:"Зеркально кадру 2",                   frame:"rect",    ratio:1.7, hold:"landscape" },
+  { n:4,  name:"Зад кабины и седло",           dist:"3 м",  hint:"Седло, шланги, площадка",             frame:"rect",    ratio:0.9, hold:"portrait" },
+  { n:5,  name:"Угол 3/4 передний левый",      dist:"5 м",  hint:"В кадре перёд и борт разом",          frame:"cornerL", ratio:1.4, hold:"landscape" },
+  { n:6,  name:"Угол 3/4 задний правый",       dist:"5 м",  hint:"В кадре седло и борт разом",          frame:"corner",  ratio:1.4, hold:"landscape" },
+  { n:7,  name:"Лобовое стекло",               dist:"1,5 м",hint:"Сколы и трещины, снимать под углом",  frame:"rect",    ratio:1.9, hold:"landscape" },
+  { n:8,  name:"Колёса слева",                 dist:"2 м",  hint:"Обе оси, диски и резина",             frame:"rect",    ratio:2.0, hold:"landscape" },
+  { n:9,  name:"Колёса справа",                dist:"2 м",  hint:"Обе оси, диски и резина",             frame:"rect",    ratio:2.0, hold:"landscape" },
+  { n:10, name:"Баки и ступени",               dist:"2,5 м",hint:"Самое частое место задиров",          frame:"rect",    ratio:1.8, hold:"landscape" },
+  { n:11, name:"Салон: панель, сиденья",       dist:"1 м",  hint:"От двери, одним заходом",             frame:"rect",    ratio:0.8, hold:"portrait", optional:true },
+];
+
+const shotsFor = (kind) => kind === "trailer" ? TRAILER_SHOTS : TRACTOR_SHOTS;
+
+/* ---------- хранилище: IndexedDB ---------- */
+const DB = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open("priyomka", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  }));
+  return {
+    async get(k) {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const q = db.transaction("kv", "readonly").objectStore("kv").get(k);
+        q.onsuccess = () => res(q.result === undefined ? null : q.result);
+        q.onerror = () => rej(q.error);
+      });
+    },
+    async set(k, v) {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const q = db.transaction("kv", "readwrite").objectStore("kv").put(v, k);
+        q.onsuccess = () => res(true);
+        q.onerror = () => rej(q.error);
+      });
+    },
+  };
+})();
+
+const KEY_UNITS = "fleet:units";
+const KEY_INDEX = "fleet:sessions";
+const EMPTY = { trailers: [], tractors: [] };
+
+async function sGet(k) { try { return await DB.get(k); } catch { return null; } }
+async function sSet(k, v) { try { await DB.set(k, v); return true; } catch { return false; } }
+
+const normReg = (s) => s.toUpperCase().replace(/\s+/g, " ").trim();
+const fmtDate = (iso) => new Date(iso).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" });
+
+/* ---------- элементы ---------- */
+const MarkerStripe = ({ height = 10 }) => (
+  <div style={{ height, backgroundImage: `repeating-linear-gradient(115deg, ${T.red} 0 14px, ${T.amber} 14px 28px)` }} />
+);
+
+function Btn({ children, onClick, variant = "primary", style = {}, disabled }) {
+  const v = {
+    primary: { background:T.ink, color:"#fff", border:`1px solid ${T.ink}` },
+    ghost:   { background:"transparent", color:T.ink, border:`1px solid ${T.line}` },
+    dark:    { background:"transparent", color:"#fff", border:"1px solid #3A434C" },
+    danger:  { background:"transparent", color:T.red, border:`1px solid ${T.red}` },
+  }[variant];
+  return (
+    <button onClick={onClick} disabled={disabled}
+      style={{ ...display, ...v, fontSize:14, padding:"15px 18px", borderRadius:2, cursor:disabled?"default":"pointer", opacity:disabled?0.4:1, minHeight:52, ...style }}>
+      {children}
+    </button>
+  );
+}
+
+const inputStyle = { ...body, width:"100%", boxSizing:"border-box", padding:"14px 12px", fontSize:16, color:T.ink, background:T.surface, border:`1px solid ${T.line}`, borderRadius:2, outline:"none" };
+
+const Field = ({ label, children }) => (
+  <label style={{ display:"block", marginBottom:14 }}>
+    <div style={{ ...display, fontSize:11, color:T.muted, marginBottom:6 }}>{label}</div>
+    {children}
+  </label>
+);
+
+/* ---------- контур поверх камеры ---------- */
+function ContourOverlay({ shot }) {
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    const measure = () => {
+      if (wrapRef.current) {
+        const r = wrapRef.current.getBoundingClientRect();
+        setBox({ w: r.width, h: r.height });
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => { window.removeEventListener("resize", measure); window.removeEventListener("orientationchange", measure); };
+  }, []);
+
+  const { w, h } = box;
+  if (!w || !h) return <div ref={wrapRef} style={{ position:"absolute", inset:0 }} />;
+
+  const fill = 0.86;
+  let cw = w * fill, ch = cw / shot.ratio;
+  if (ch > h * fill) { ch = h * fill; cw = ch * shot.ratio; }
+  const cx = (w - cw) / 2, cy = (h - ch) / 2;
+
+  let path;
+  if (shot.frame === "corner") {
+    path = `M ${cx} ${cy + ch*0.06} L ${cx+cw} ${cy + ch*0.2} L ${cx+cw} ${cy+ch} L ${cx} ${cy + ch*0.94} Z`;
+  } else if (shot.frame === "cornerL") {
+    path = `M ${cx} ${cy + ch*0.2} L ${cx+cw} ${cy + ch*0.06} L ${cx+cw} ${cy + ch*0.94} L ${cx} ${cy+ch} Z`;
+  } else {
+    path = `M ${cx} ${cy} L ${cx+cw} ${cy} L ${cx+cw} ${cy+ch} L ${cx} ${cy+ch} Z`;
+  }
+
+  const c = 26;
+  const marks = [[cx,cy,1,1],[cx+cw,cy,-1,1],[cx,cy+ch,1,-1],[cx+cw,cy+ch,-1,-1]];
+
+  return (
+    <div ref={wrapRef} style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
+      <svg width={w} height={h} style={{ position:"absolute", inset:0 }}>
+        <defs>
+          <mask id="cut">
+            <rect x="0" y="0" width={w} height={h} fill="#fff" />
+            <path d={path} fill="#000" />
+          </mask>
+        </defs>
+        <rect x="0" y="0" width={w} height={h} fill="rgba(16,20,24,0.55)" mask="url(#cut)" />
+        <path d={path} fill="none" stroke={T.amber} strokeWidth="3" strokeDasharray="14 10" />
+        {marks.map(([mx,my,sx,sy],i) => (
+          <g key={i} stroke={T.amber} strokeWidth="5" strokeLinecap="square">
+            <line x1={mx} y1={my} x2={mx + c*sx} y2={my} />
+            <line x1={mx} y1={my} x2={mx} y2={my + c*sy} />
+          </g>
+        ))}
+        <line x1={cx+cw/2} y1={cy+ch/2-14} x2={cx+cw/2} y2={cy+ch/2+14} stroke={T.amber} strokeWidth="2" opacity="0.8" />
+        <line x1={cx+cw/2-14} y1={cy+ch/2} x2={cx+cw/2+14} y2={cy+ch/2} stroke={T.amber} strokeWidth="2" opacity="0.8" />
+      </svg>
+    </div>
+  );
+}
+
+/* ---------- экран съёмки ---------- */
+function CaptureScreen({ unit, kind, prevSession, onFinish, onCancel }) {
+  const shots = shotsFor(kind);
+  const [idx, setIdx] = useState(0);
+  const [photos, setPhotos] = useState({});
+  const [camState, setCamState] = useState("starting");
+  const [driver, setDriver] = useState("");
+  const [askDriver, setAskDriver] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const shot = shots[idx];
+
+  useEffect(() => {
+    if (askDriver) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } }, audio: false,
+        });
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play().catch(()=>{}); }
+        setCamState("live");
+      } catch { setCamState("denied"); }
+    })();
+    return () => { cancelled = true; if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop()); };
+  }, [askDriver]);
+
+  const downscale = (src, sw, sh) => {
+    const max = 1100, scale = Math.min(1, max / Math.max(sw, sh));
+    const c = document.createElement("canvas");
+    c.width = Math.round(sw * scale); c.height = Math.round(sh * scale);
+    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.62);
+  };
+
+  const shoot = () => {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth) return;
+    setPhotos(p => ({ ...p, [shot.n]: downscale(v, v.videoWidth, v.videoHeight) }));
+  };
+
+  const shootFromFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => setPhotos(p => ({ ...p, [shot.n]: downscale(img, img.width, img.height) }));
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const finish = async () => {
+    setSaving(true); setSaveErr("");
+    const id = String(Date.now());
+    const session = { id, unitId:unit.id, reg:unit.reg, kind, driver:driver.trim(), date:new Date().toISOString(), photos, count:Object.keys(photos).length };
+    const ok = await sSet("shots:" + id, session);
+    if (!ok) { setSaving(false); setSaveErr("Комплект не сохранился. Освободите место и повторите."); return; }
+    const index = (await sGet(KEY_INDEX)) || [];
+    const meta = { id, unitId:unit.id, reg:unit.reg, kind, driver:session.driver, date:session.date, count:session.count };
+    await sSet(KEY_INDEX, [meta, ...index].slice(0, 500));
+    setSaving(false);
+    onFinish(meta);
+  };
+
+  const done = Object.keys(photos).length;
+  const current = photos[shot.n];
+  const prevPhoto = prevSession && prevSession.photos ? prevSession.photos[shot.n] : null;
+
+  if (askDriver) {
+    return (
+      <div style={{ padding:16 }}>
+        <div style={{ ...display, fontSize:20 }}>Съёмка</div>
+        <div style={{ ...display, fontSize:15, color:T.amber, marginTop:2, marginBottom:18 }}>{unit.reg}</div>
+        <div style={{ ...display, fontSize:11, color:T.muted, marginBottom:6 }}>Кто принимает</div>
+        <input style={inputStyle} value={driver} onChange={e => setDriver(e.target.value)} placeholder="Фамилия водителя" />
+        <div style={{ ...body, fontSize:13, color:T.muted, margin:"14px 0 20px", lineHeight:1.5 }}>
+          {shots.length} кадров по контуру. Совмещайте борт с жёлтой рамкой — расстояние подберётся само.
+        </div>
+        <Btn onClick={() => setAskDriver(false)} style={{ width:"100%" }}>Включить камеру</Btn>
+        <Btn variant="ghost" onClick={onCancel} style={{ width:"100%", marginTop:8 }}>Отмена</Btn>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background:T.ink, minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <div style={{ padding:"12px 14px", color:"#fff", display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ ...display, fontSize:26, color:T.amber, lineHeight:1 }}>{String(shot.n).padStart(2,"0")}</div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ ...body, fontSize:14, fontWeight:600 }}>{shot.name}</div>
+          <div style={{ ...body, fontSize:12, color:"#A7ADB4" }}>{shot.hint}</div>
+        </div>
+        <div style={{ ...display, fontSize:12, background: shot.hold === "landscape" ? T.amber : "#2A323A", color: shot.hold === "landscape" ? T.ink : "#fff", padding:"4px 8px" }}>
+          {shot.hold === "landscape" ? "боком" : "стоя"}
+        </div>
+      </div>
+
+      <div style={{ position:"relative", flex:1, minHeight:300, background:"#000", overflow:"hidden" }}>
+        {current ? (
+          <img src={current} alt={shot.name} style={{ width:"100%", height:"100%", objectFit:"contain" }} />
+        ) : (
+          <React.Fragment>
+            <video ref={videoRef} playsInline muted autoPlay style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            <ContourOverlay shot={shot} />
+            {camState === "denied" ? (
+              <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", padding:24, textAlign:"center" }}>
+                <div>
+                  <div style={{ ...display, fontSize:15, color:"#fff", marginBottom:8 }}>Камера недоступна</div>
+                  <div style={{ ...body, fontSize:13, color:"#A7ADB4", marginBottom:16 }}>
+                    Разрешите доступ к камере в настройках браузера или снимите обычной камерой телефона.
+                  </div>
+                  <label style={{ ...display, fontSize:13, background:T.amber, color:T.ink, padding:"14px 18px", display:"inline-block", cursor:"pointer" }}>
+                    Открыть камеру телефона
+                    <input type="file" accept="image/*" capture="environment" style={{ display:"none" }}
+                      onChange={e => e.target.files && e.target.files[0] && shootFromFile(e.target.files[0])} />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+          </React.Fragment>
+        )}
+
+        {prevPhoto && !current ? (
+          <div style={{ position:"absolute", left:10, bottom:10, width:84, border:`2px solid ${T.amber}` }}>
+            <img src={prevPhoto} alt="прошлая съёмка" style={{ width:"100%", display:"block" }} />
+            <div style={{ ...display, fontSize:9, background:T.amber, color:T.ink, textAlign:"center", padding:"2px 0" }}>прошлый раз</div>
+          </div>
+        ) : null}
+      </div>
+
+      <div style={{ padding:"12px 14px 18px", background:T.ink }}>
+        <div style={{ display:"flex", gap:3, marginBottom:12 }}>
+          {shots.map(s => (
+            <div key={s.n} style={{ flex:1, height:4, background: photos[s.n] ? T.amber : (s.n === shot.n ? "#5A6570" : "#2A323A") }} />
+          ))}
+        </div>
+
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <Btn variant="dark" onClick={() => setIdx(Math.max(0, idx-1))} disabled={idx === 0} style={{ flex:1, minHeight:48, fontSize:12 }}>Назад</Btn>
+
+          {current ? (
+            <button onClick={() => setPhotos(p => { const c = {...p}; delete c[shot.n]; return c; })}
+              style={{ ...display, fontSize:12, width:74, height:74, borderRadius:"50%", background:"transparent", color:"#fff", border:"2px solid #5A6570", cursor:"pointer" }}>
+              Пере&#8209;снять
+            </button>
+          ) : (
+            <button onClick={shoot} disabled={camState !== "live"} aria-label="Снять кадр"
+              style={{ width:74, height:74, borderRadius:"50%", background: camState === "live" ? T.amber : "#3A434C", border:"4px solid #fff", cursor: camState === "live" ? "pointer" : "default" }} />
+          )}
+
+          <Btn variant="dark" onClick={() => setIdx(Math.min(shots.length-1, idx+1))} disabled={idx === shots.length-1} style={{ flex:1, minHeight:48, fontSize:12 }}>Дальше</Btn>
+        </div>
+
+        {saveErr ? <div style={{ ...body, color:T.amber, fontSize:12, marginTop:12 }}>{saveErr}</div> : null}
+
+        <div style={{ display:"flex", gap:8, marginTop:14 }}>
+          <Btn variant="dark" onClick={onCancel} style={{ flex:1, minHeight:46, fontSize:12 }}>Прервать</Btn>
+          <Btn onClick={finish} disabled={done === 0 || saving}
+            style={{ flex:2, minHeight:46, fontSize:13, background:T.amber, color:T.ink, border:`1px solid ${T.amber}` }}>
+            {saving ? "Сохраняю…" : `Завершить · ${done}/${shots.length}`}
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- карточка и форма ---------- */
+function UnitCard({ u, last, onEdit, onCapture }) {
+  return (
+    <div style={{ background:T.surface, border:`1px solid ${T.line}`, marginBottom:10, display:"flex" }}>
+      <div style={{ width:6, background: last ? T.ok : T.amber }} />
+      <div style={{ flex:1, padding:"14px 14px 12px" }}>
+        <div style={{ ...display, fontSize:24, lineHeight:1 }}>{u.reg}</div>
+        <div style={{ ...body, fontSize:13, color:T.muted, marginTop:6 }}>
+          {[u.type, u.brand].filter(Boolean).join(" · ") || "без описания"}
+        </div>
+        <div style={{ ...body, fontSize:12, color: last ? T.ok : T.muted, marginTop:8, paddingTop:8, borderTop:`1px dashed ${T.line}` }}>
+          {last ? `Снимали ${fmtDate(last.date)}${last.driver ? " · " + last.driver : ""} · ${last.count} кадров` : "Съёмок ещё не было"}
+        </div>
+        <div style={{ display:"flex", gap:8, marginTop:12 }}>
+          <Btn style={{ flex:2, minHeight:46, fontSize:12 }} onClick={() => onCapture(u)}>Снять</Btn>
+          <Btn variant="ghost" style={{ flex:1, minHeight:46, fontSize:12 }} onClick={() => onEdit(u)}>Изменить</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UnitForm({ initial, kind, existing, onSave, onDelete, onCancel }) {
+  const [reg, setReg] = useState(initial ? initial.reg : "");
+  const [type, setType] = useState(initial ? initial.type : (kind === "trailer" ? TRAILER_TYPES[0] : TRACTOR_TYPES[0]));
+  const [brand, setBrand] = useState(initial ? initial.brand : (kind === "tractor" ? "MAN TGX" : ""));
+  const [note, setNote] = useState(initial ? initial.note : "");
+  const [err, setErr] = useState("");
+  const types = kind === "trailer" ? TRAILER_TYPES : TRACTOR_TYPES;
+
+  const submit = () => {
+    const r = normReg(reg);
+    if (!r) return setErr("Введите регистрационный номер.");
+    if (existing.find(u => u.reg === r && (!initial || u.id !== initial.id))) return setErr("Такой номер уже есть в базе.");
+    onSave({ id: initial ? initial.id : String(Date.now()), reg:r, type, brand:brand.trim(), note:note.trim() });
+  };
+
+  return (
+    <div style={{ padding:16 }}>
+      <div style={{ ...display, fontSize:20, marginBottom:18 }}>
+        {initial ? "Изменить" : (kind === "trailer" ? "Новый прицеп" : "Новый тягач")}
+      </div>
+      <Field label="Регистрационный номер">
+        <input style={{ ...inputStyle, ...display, fontSize:22 }} value={reg} autoCapitalize="characters"
+          onChange={e => { setReg(e.target.value); setErr(""); }} placeholder={kind === "trailer" ? "WGM 5842X" : "AB 1234-7"} />
+      </Field>
+      <Field label="Тип">
+        <select style={inputStyle} value={type} onChange={e => setType(e.target.value)}>
+          {types.map(t => <option key={t}>{t}</option>)}
+        </select>
+      </Field>
+      <Field label={kind === "tractor" ? "Модель" : "Марка и модель"}>
+        <input style={inputStyle} value={brand} onChange={e => setBrand(e.target.value)} placeholder={kind === "trailer" ? "Schmitz SCS 24" : "MAN TGX 18.510"} />
+        {kind === "tractor" ? (
+          <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>
+            {MAN_MODELS.map(m => {
+              const on = brand.startsWith(m);
+              return (
+                <button key={m} onClick={() => setBrand(m)}
+                  style={{ ...display, fontSize:12, padding:"9px 12px", background: on ? T.ink : "transparent", color: on ? "#fff" : T.muted, border:`1px solid ${on ? T.ink : T.line}`, borderRadius:2, cursor:"pointer" }}>
+                  {m.replace("MAN ", "")}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </Field>
+      <Field label="Примечание">
+        <input style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="Известные дефекты, особенности" />
+      </Field>
+      {err ? <div style={{ ...body, color:T.red, fontSize:13, marginBottom:12 }}>{err}</div> : null}
+      <div style={{ display:"flex", gap:8 }}>
+        <Btn onClick={submit} style={{ flex:2 }}>Сохранить</Btn>
+        <Btn variant="ghost" onClick={onCancel} style={{ flex:1 }}>Отмена</Btn>
+      </div>
+      {initial ? <Btn variant="danger" onClick={() => onDelete(initial.id)} style={{ width:"100%", marginTop:10 }}>Удалить из базы</Btn> : null}
+    </div>
+  );
+}
+
+/* ---------- приложение ---------- */
+function App() {
+  const [units, setUnits] = useState(EMPTY);
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState(false);
+  const [kind, setKind] = useState("trailer");
+  const [screen, setScreen] = useState("list");
+  const [editing, setEditing] = useState(null);
+  const [target, setTarget] = useState(null);
+  const [prevSession, setPrevSession] = useState(null);
+  const [q, setQ] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const u = (await sGet(KEY_UNITS)) || EMPTY;
+      const s = (await sGet(KEY_INDEX)) || [];
+      setUnits({ trailers: u.trailers || [], tractors: u.tractors || [] });
+      setSessions(s);
+      setLoading(false);
+    })();
+  }, []);
+
+  const listKey = kind === "trailer" ? "trailers" : "tractors";
+  const list = units[listKey];
+
+  const lastByUnit = useMemo(() => {
+    const m = {};
+    sessions.forEach(s => { if (!m[s.unitId]) m[s.unitId] = s; });
+    return m;
+  }, [sessions]);
+
+  const filtered = useMemo(() => {
+    const s = q.toUpperCase().trim();
+    const arr = s ? list.filter(u => u.reg.includes(s) || (u.brand || "").toUpperCase().includes(s)) : list;
+    return [...arr].sort((a,b) => a.reg.localeCompare(b.reg));
+  }, [list, q]);
+
+  const persist = async (next) => { setUnits(next); setSaveError(!(await sSet(KEY_UNITS, next))); };
+
+  const handleSave = (unit) => {
+    const arr = list.some(u => u.id === unit.id) ? list.map(u => u.id === unit.id ? unit : u) : [...list, unit];
+    persist({ ...units, [listKey]: arr });
+    setScreen("list"); setEditing(null);
+  };
+
+  const startCapture = async (u) => {
+    const meta = lastByUnit[u.id];
+    setPrevSession(meta ? await sGet("shots:" + meta.id) : null);
+    setTarget(u); setScreen("capture");
+  };
+
+  if (screen === "capture" && target) {
+    return <CaptureScreen unit={target} kind={kind} prevSession={prevSession}
+      onCancel={() => { setScreen("list"); setTarget(null); }}
+      onFinish={(meta) => { setSessions(s => [meta, ...s]); setScreen("list"); setTarget(null); }} />;
+  }
+
+  return (
+    <div style={{ ...body, background:T.bg, minHeight:"100vh", color:T.ink }}>
+      <header style={{ background:T.surface, borderBottom:`1px solid ${T.line}` }}>
+        <MarkerStripe />
+        <div style={{ padding:"14px 16px 12px" }}>
+          <div style={{ ...display, fontSize:19, lineHeight:1 }}>Приёмка</div>
+          <div style={{ ...body, fontSize:12, color:T.muted, marginTop:4 }}>Съёмка по контуру, база машин</div>
+        </div>
+        <div style={{ display:"flex", borderTop:`1px solid ${T.line}` }}>
+          {[{ k:"trailer", label:`Прицепы${units.trailers.length ? " · " + units.trailers.length : ""}` },
+            { k:"tractor", label:`Тягачи${units.tractors.length ? " · " + units.tractors.length : ""}` }].map(t => (
+            <button key={t.k} onClick={() => { setKind(t.k); setScreen("list"); }}
+              style={{ ...display, flex:1, padding:"14px 8px", fontSize:13, background: kind === t.k ? T.ink : "transparent", color: kind === t.k ? "#fff" : T.muted, border:"none", cursor:"pointer" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {saveError ? (
+        <div style={{ ...body, background:T.red, color:"#fff", padding:"10px 16px", fontSize:13 }}>Данные не сохранились. Повторите ввод.</div>
+      ) : null}
+
+      {loading ? (
+        <div style={{ ...body, padding:24, color:T.muted, fontSize:14 }}>Загружаю базу…</div>
+      ) : screen === "form" ? (
+        <UnitForm initial={editing} kind={kind} existing={list} onSave={handleSave}
+          onDelete={(id) => { persist({ ...units, [listKey]: list.filter(u => u.id !== id) }); setScreen("list"); setEditing(null); }}
+          onCancel={() => { setScreen("list"); setEditing(null); }} />
+      ) : (
+        <div style={{ padding:16 }}>
+          {list.length > 3 ? (
+            <input style={{ ...inputStyle, marginBottom:12 }} value={q} onChange={e => setQ(e.target.value)} placeholder="Поиск по номеру или марке" />
+          ) : null}
+
+          {filtered.length === 0 ? (
+            <div style={{ background:T.surface, border:`1px dashed ${T.line}`, padding:24, textAlign:"center", marginBottom:12 }}>
+              <div style={{ ...display, fontSize:15, marginBottom:6 }}>{list.length === 0 ? "База пустая" : "Ничего не найдено"}</div>
+              <div style={{ ...body, fontSize:13, color:T.muted }}>
+                {list.length === 0 ? "Добавьте первый номер — на него повесятся съёмки." : "Измените запрос."}
+              </div>
+            </div>
+          ) : filtered.map(u => (
+            <UnitCard key={u.id} u={u} last={lastByUnit[u.id]}
+              onEdit={x => { setEditing(x); setScreen("form"); }} onCapture={startCapture} />
+          ))}
+
+          <Btn onClick={() => { setEditing(null); setScreen("form"); }} style={{ width:"100%", marginTop:6 }}>
+            + {kind === "trailer" ? "Добавить прицеп" : "Добавить тягач"}
+          </Btn>
+          <div style={{ ...body, fontSize:12, color:T.muted, marginTop:18, lineHeight:1.5 }}>
+            Комплекты хранятся на устройстве. При следующей съёмке прошлый кадр показывается в углу экрана.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
